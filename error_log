@@ -1,0 +1,1 @@
+[17-Mar-2025 07:53:27 UTC] PHP Fatal error:  Cannot use App\Http\Controllers\Log as Log because the name is already in use in /home/u727229935/domains/valuerkkda.com/public_html/app/Http/Controllers/WorkController.php on line 14
