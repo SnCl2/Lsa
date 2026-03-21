@@ -1,0 +1,73 @@
+
+> build
+> vite build
+
+[36mvite v6.2.0 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : Browserslist: 
+browsers data (caniuse-lite) 
+is 13 months old. Please run:
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS 
+$args
++   
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (Browser  
+  slist: b...ld. Please ru   
+ n::String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+  npx 
+update-browserslist-db@latest
+  Why you should do it 
+regularly: https://github.com
+/browserslist/update-db#readm
+e
+[32m???[39m 1 modules transformed.
+[31m???[39m Build failed 
+in 814ms
+[31merror during build:
+[31m[vite:css] [postcss] It 
+looks like you're trying to 
+use `tailwindcss` directly 
+as a PostCSS plugin. The 
+PostCSS plugin has moved to 
+a separate package, so to 
+continue using Tailwind CSS 
+with PostCSS you'll need to 
+install 
+`@tailwindcss/postcss` and 
+update your PostCSS 
+configuration.[31m
+file: [36mC:\Users\Python\On
+eDrive\Desktop\kkda\Lsa\resou
+rces\css\app.css:undefined:Na
+N[31m
+    at Re (C:\Users\Python\On
+eDrive\Desktop\kkda\Lsa\node_
+modules\tailwindcss\dist\lib.
+js:33:1723)
+    at LazyResult.runOnRoot (
+C:\Users\Python\OneDrive\Desk
+top\kkda\Lsa\node_modules\pos
+tcss\lib\lazy-result.js:361:1
+6)
+    at LazyResult.runAsync (C
+:\Users\Python\OneDrive\Deskt
+op\kkda\Lsa\node_modules\post
+css\lib\lazy-result.js:290:26
+)
+    at LazyResult.async (C:\U
+sers\Python\OneDrive\Desktop\
+kkda\Lsa\node_modules\postcss
+\lib\lazy-result.js:192:30)
+    at LazyResult.then (C:\Us
+ers\Python\OneDrive\Desktop\k
+kda\Lsa\node_modules\postcss\
+lib\lazy-result.js:436:17)[3
+9m
