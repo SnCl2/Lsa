@@ -1,0 +1,15 @@
+---
+description: Database changes - use SQL, do not run Laravel migrations
+alwaysApply: true
+---
+
+# Database Schema Changes
+
+**Do not run Laravel migrations** (`php artisan migrate`) for this project.
+
+All database schema changes must be done using raw SQL. Provide SQL commands or `.sql` files for the user to execute manually (e.g., via phpMyAdmin, mysql CLI, or their preferred DB tool).
+
+When adding columns, tables, or other schema changes:
+1. Create or update a `.sql` file (e.g., in `database/`) with the SQL statements
+2. Do NOT execute `php artisan migrate` or migration commands
+3. Optionally create a migration file for version control/documentation only, but never run it
