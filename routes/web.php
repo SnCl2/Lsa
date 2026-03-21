@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
     // Toggle routes - accessible to all roles except Bank Branch (permission checked in controller)
     Route::post('works/{work}/toggle-printed', [WorkController::class, 'togglePrinted'])->name('works.togglePrinted');
     Route::post('works/{work}/toggle-vdn', [WorkController::class, 'toggleVdn'])->name('works.toggleVdn');
+    Route::post('works/{work}/toggle-result', [WorkController::class, 'toggleResult'])->name('works.toggleResult');
     
     // Debug route for testing password reset
     Route::get('debug-password-reset/{user}', function($user) {

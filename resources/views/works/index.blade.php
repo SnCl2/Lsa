@@ -497,6 +497,21 @@
                             @if($work->result)
                                 <br><strong>Result:</strong> {{ $work->result }}
                             @endif
+                            @if(auth()->user()->roles->contains('name', 'KKDA Admin') ||
+                                auth()->user()->roles->contains('name', 'In-Charge') ||
+                                auth()->user()->roles->contains('name', 'Surveyor') ||
+                                auth()->user()->roles->contains('name', 'Reporter') ||
+                                auth()->user()->roles->contains('name', 'Checker') ||
+                                auth()->user()->roles->contains('name', 'Super Admin'))
+                                <div class="mt-2 btn-group" role="group">
+                                    <button type="button" class="btn btn-sm {{ $work->result === 'Negative' ? 'btn-danger' : 'btn-outline-danger' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Negative" title="Toggle Negative">
+                                        Negative
+                                    </button>
+                                    <button type="button" class="btn btn-sm {{ $work->result === 'Hold' ? 'btn-warning' : 'btn-outline-warning' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Hold" title="Toggle Hold">
+                                        Hold
+                                    </button>
+                                </div>
+                            @endif
                         
                             {{-- Download Buttons --}}
                             @if($work->final_report_word)
@@ -939,6 +954,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('An error occurred while updating VDN status');
                 // Revert checkbox
                 this.checked = !isVdn;
+            });
+        });
+    });
+
+    // Handle Toggle Result
+    document.querySelectorAll('.toggle-result-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const workId = this.getAttribute('data-work-id');
+            const currentResult = this.getAttribute('data-current-result');
+            const targetResult = this.getAttribute('data-target-result');
+            
+            let newResult = targetResult;
+            let remarks = null;
+    
+            if (currentResult === targetResult) {
+                newResult = 'null';
+            } else {
+                remarks = prompt(`Please enter remarks for marking this work as ${targetResult}:`);
+                if (remarks === null) {
+                    return;
+                }
+                if (remarks.trim() === '') {
+                    alert('Remarks are required.');
+                    return;
+                }
+            }
+    
+            fetch(`/works/${workId}/toggle-result`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    result: newResult,
+                    remarks: remarks
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the result');
             });
         });
     });

@@ -640,6 +640,15 @@ public function worksForBankBranch(Request $request)
     
             // Update Work
             $work->update($validatedData);
+
+            if (($validatedData['status'] ?? null) === 'Surveying') {
+                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
+            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+                $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
+            } elseif (($validatedData['status'] ?? null) === 'Checking') {
+                $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
+            }
+            $work->save();
     
             return redirect()->route('works.myWorks')->with('success', 'Work updated successfully.');
         } catch (\Exception $e) {
@@ -910,6 +919,15 @@ public function worksForBankBranch(Request $request)
 
             $work->update($validatedData);
 
+            if (($validatedData['status'] ?? null) === 'Surveying') {
+                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
+            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+                $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
+            } elseif (($validatedData['status'] ?? null) === 'Checking') {
+                $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
+            }
+            $work->save();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Status updated successfully',
@@ -974,6 +992,15 @@ public function worksForBankBranch(Request $request)
             }
 
             $work->update(['status' => $nextStatus]);
+
+            if ($nextStatus === 'Surveying') {
+                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
+            } elseif ($nextStatus === 'Reporting') {
+                $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
+            } elseif ($nextStatus === 'Checking') {
+                $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
+            }
+            $work->save();
 
             return response()->json([
                 'success' => true,
@@ -1191,6 +1218,82 @@ public function worksForBankBranch(Request $request)
                 'success' => false,
                 'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function toggleResult(Request $request, Work $work)
+    {
+        try {
+            $userRoles = auth()->user()->roles->pluck('name')->toArray();
+            $allowedRoles = ['Super Admin', 'KKDA Admin', 'In-Charge', 'Surveyor', 'Reporter', 'Checker'];
+            
+            if (empty(array_intersect($allowedRoles, $userRoles))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to update the result.'
+                ], 403);
+            }
+            
+            $validatedData = $request->validate([
+                'result' => 'required|string|in:Hold,Negative,null',
+                'remarks' => 'nullable|string'
+            ]);
+
+            $newResult = $validatedData['result'] === 'null' ? null : $validatedData['result'];
+            
+            $work->result = $newResult;
+            if ($request->filled('remarks')) {
+                $work->remarks = $validatedData['remarks'];
+            }
+            
+            $work->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Result updated successfully',
+                'result' => $work->result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function autoAssignRole($work, $roleName, $status, $assigneeColumn)
+    {
+        // Only assign if currently null
+        if (!empty($work->{$assigneeColumn})) {
+            return;
+        }
+
+        // Get all users with the given role
+        $users = User::whereHas('roles', function($q) use ($roleName) {
+            $q->where('name', $roleName);
+        })->get();
+
+        if ($users->isEmpty()) {
+            return; // No users found with this role
+        }
+
+        $minLoad = PHP_INT_MAX;
+        $selectedUserId = null;
+
+        foreach ($users as $user) {
+            // Count active work items assigned to this user that are currently in this specific stage
+            $load = Work::where($assigneeColumn, $user->id)
+                        ->where('status', $status)
+                        ->count();
+                        
+            if ($load < $minLoad) {
+                $minLoad = $load;
+                $selectedUserId = $user->id;
+            }
+        }
+
+        if ($selectedUserId) {
+            $work->{$assigneeColumn} = $selectedUserId;
         }
     }
 }
