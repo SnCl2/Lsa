@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // Modify the enum column to include c and d
-        DB::statement("ALTER TABLE works MODIFY COLUMN valuer ENUM('a', 'b', 'c', 'd') NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE works MODIFY COLUMN valuer ENUM('a', 'b', 'c', 'd') NULL");
+        }
     }
 
     /**
@@ -22,6 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert back to original enum values
-        DB::statement("ALTER TABLE works MODIFY COLUMN valuer ENUM('a', 'b') NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE works MODIFY COLUMN valuer ENUM('a', 'b') NULL");
+        }
     }
 };

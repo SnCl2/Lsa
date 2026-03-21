@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::table('works', function (Blueprint $table) {
             // Expand result options to include Hold and Canceled
-            $table->enum('result', ['+ve', '-ve', 'Hold', 'Canceled'])->nullable()->change();
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->enum('result', ['+ve', '-ve', 'Hold', 'Canceled'])->nullable()->change();
+            }
 
             // Optional: shrink status options by removing Hold/Canceled (keep for legacy rows if DB enforces)
             // If using ENUM and you want to strictly drop values, uncomment the next line,
