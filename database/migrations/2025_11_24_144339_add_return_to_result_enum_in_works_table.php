@@ -15,9 +15,9 @@ return new class extends Migration
         // Modify the enum column to include Return
         // Check if database uses +ve/-ve or Positive/Negative
         // Adding Return to both possible enum structures
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE works MODIFY COLUMN result ENUM('+ve', '-ve', 'Positive', 'Negative', 'Hold', 'Canceled', 'Return') NULL");
-        }
+
+        DB::statement("ALTER TABLE works MODIFY COLUMN result ENUM('+ve', '-ve', 'Positive', 'Negative', 'Hold', 'Canceled', 'Return') NULL");
+
     }
 
     /**
@@ -26,8 +26,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert back to previous enum values
-        if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE works MODIFY COLUMN result ENUM('+ve', '-ve', 'Hold', 'Canceled') NULL");
-        }
+
+        DB::statement("ALTER TABLE works MODIFY COLUMN result ENUM('+ve', '-ve', 'Hold', 'Canceled') NULL");
+
     }
 };
