@@ -547,6 +547,16 @@ public function worksForBankBranch(Request $request)
 
             $work = Work::create($validatedData);
             
+            // Auto-assign if status is special at creation
+            if (($validatedData['status'] ?? null) === 'Surveying') {
+                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
+            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+                $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
+            } elseif (($validatedData['status'] ?? null) === 'Checking') {
+                $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
+            }
+            $work->save();
+            
             return redirect()->route('works.myWorks')->with('success', 'Work created successfully.');
         } catch (\Exception $e) {
             return back()->withInput()->withErrors(['error' => 'An error occurred: ' . $e->getMessage()]);
@@ -1268,9 +1278,11 @@ public function worksForBankBranch(Request $request)
             return;
         }
 
-        // Get all users with the given role
+        // Get all users with the given role who are allowed to login
         $users = User::whereHas('roles', function($q) use ($roleName) {
             $q->where('name', $roleName);
+        })->whereHas('userRoleRelations', function($q) {
+            $q->where('can_login', 1);
         })->get();
 
         if ($users->isEmpty()) {
