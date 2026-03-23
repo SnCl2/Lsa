@@ -121,9 +121,18 @@
                                     <td>{{ $user->email }}</td>
                                     <td>{{ implode(', ', $user->roles->pluck('name')->toArray()) }}</td>
                                     <td>
-                                        <span class="badge {{ optional($user->userRoleRelations->first())->can_login ? 'badge-success' : 'badge-danger' }}">
-                                            {{ optional($user->userRoleRelations->first())->can_login ? 'Yes' : 'No' }}
-                                        </span>
+                                        @php $canLogin = optional($user->userRoleRelations->first())->can_login; @endphp
+                                        <button
+                                            class="login-toggle-btn {{ $canLogin ? 'active' : '' }}"
+                                            data-user-id="{{ $user->id }}"
+                                            data-url="{{ route('users.toggleLogin', $user->id) }}"
+                                            title="{{ $canLogin ? 'Click to block login' : 'Click to allow login' }}"
+                                        >
+                                            <span class="toggle-track">
+                                                <span class="toggle-thumb"></span>
+                                            </span>
+                                            <span class="toggle-label">{{ $canLogin ? 'Allowed' : 'Blocked' }}</span>
+                                        </button>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-2">
@@ -173,5 +182,132 @@
     margin-bottom: 0.5rem;
     color: #495057;
 }
+
+/* ── Login Toggle Switch ── */
+.login-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 0;
+}
+
+.toggle-track {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #dc3545;
+    border-radius: 999px;
+    transition: background 0.25s;
+    flex-shrink: 0;
+}
+
+.login-toggle-btn.active .toggle-track {
+    background: #28a745;
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.login-toggle-btn.active .toggle-thumb {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #dc3545;
+    min-width: 46px;
+}
+
+.login-toggle-btn.active .toggle-label {
+    color: #28a745;
+}
+
+.login-toggle-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Toast ── */
+#login-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    min-width: 260px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+#login-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+#login-toast.success { background: #28a745; }
+#login-toast.danger  { background: #dc3545; }
 </style>
+
+<div id="login-toast"></div>
+
+<script>
+(function () {
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    function showToast(msg, type) {
+        const t = document.getElementById('login-toast');
+        t.textContent = msg;
+        t.className = 'show ' + type;
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => { t.className = ''; }, 3000);
+    }
+
+    document.querySelectorAll('.login-toggle-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            btn.disabled = true;
+            const url = btn.dataset.url;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const isActive = data.can_login;
+                    btn.classList.toggle('active', isActive);
+                    btn.querySelector('.toggle-label').textContent = isActive ? 'Allowed' : 'Blocked';
+                    btn.title = isActive ? 'Click to block login' : 'Click to allow login';
+                    showToast(data.message, isActive ? 'success' : 'danger');
+                } else {
+                    showToast('Something went wrong.', 'danger');
+                }
+            })
+            .catch(() => showToast('Network error.', 'danger'))
+            .finally(() => { btn.disabled = false; });
+        });
+    });
+}());
+</script>
 @endsection

@@ -11,7 +11,7 @@ class UserRoleRelation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'role_id'];
+    protected $fillable = ['user_id', 'role_id', 'can_login'];
 
     public function user()
     {

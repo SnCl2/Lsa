@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
         Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
         Route::post('users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
+        Route::post('users/{user}/toggle-login', [UserController::class, 'toggleLogin'])->name('users.toggleLogin');
         Route::resource('roles', UserRoleController::class)->except(['show']);
         Route::get('works/index', [WorkController::class, 'index'])->name('works.index');
         Route::get('works/export', [WorkController::class, 'export'])->name('works.export');

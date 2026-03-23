@@ -262,4 +262,36 @@ class UserController extends Controller
         return redirect()->route('users.index')
             ->with('success', 'You have returned to your admin account.');
     }
+
+    /**
+     * Toggle login permission for a user (AJAX)
+     */
+    public function toggleLogin(User $user)
+    {
+        // Get current can_login state (from first relation, default false)
+        $currentState = $user->userRoleRelations->first()?->can_login ?? false;
+        $newState = !$currentState;
+
+        // Update all role relations for this user
+        if ($user->userRoleRelations->isEmpty()) {
+            // No relations exist — create one per role (if user has roles)
+            foreach ($user->roles as $role) {
+                UserRoleRelation::updateOrCreate(
+                    ['user_id' => $user->id, 'role_id' => $role->id],
+                    ['can_login' => $newState]
+                );
+            }
+        } else {
+            $user->userRoleRelations()->update(['can_login' => $newState]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'can_login' => $newState,
+            'user_id' => $user->id,
+            'message' => $newState
+                ? "{$user->name} can now login."
+                : "{$user->name} has been blocked from logging in.",
+        ]);
+    }
 }
