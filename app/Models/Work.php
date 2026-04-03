@@ -105,6 +105,39 @@ class Work extends Model
     ];
 
     /**
+     * Boot function from Laravel.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($work) {
+            if (empty($work->custom_id)) {
+                $now = now();
+                $prefix = strtoupper($now->format('M')); // e.g., APR, MAY
+
+                // Find the latest work from the current month
+                $lastWork = static::whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('custom_id', 'like', $prefix . '-%')
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                $nextNumber = 1;
+
+                if ($lastWork && !empty($lastWork->custom_id)) {
+                    $parts = explode('-', $lastWork->custom_id);
+                    if (count($parts) === 2 && is_numeric($parts[1])) {
+                        $nextNumber = (int) $parts[1] + 1;
+                    }
+                }
+
+                $work->custom_id = $prefix . '-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
+    /**
      * Relationships with User Model
      */
     public function surveyor()
