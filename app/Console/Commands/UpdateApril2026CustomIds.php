@@ -42,12 +42,17 @@ class UpdateApril2026CustomIds extends Command
 
         $this->info('Found ' . $works->count() . ' works. Updating...');
 
-        $counter = 1;
         $prefix = 'APR';
+        $counters = []; // Keep track of the counter per valuer
 
-        DB::transaction(function () use ($works, $prefix, &$counter) {
+        DB::transaction(function () use ($works, $prefix, &$counters) {
             foreach ($works as $work) {
-                $newCustomId = $prefix . '-' . str_pad($counter, 2, '0', STR_PAD_LEFT);
+                $valuer = $work->valuer ?? 'unknown';
+                if (!isset($counters[$valuer])) {
+                    $counters[$valuer] = 1;
+                }
+
+                $newCustomId = $prefix . '-' . str_pad($counters[$valuer], 2, '0', STR_PAD_LEFT);
                 $oldCustomId = $work->custom_id;
                 
                 $work->custom_id = $newCustomId;
@@ -55,8 +60,8 @@ class UpdateApril2026CustomIds extends Command
                 // save quietly so it doesn't trigger observers if any
                 $work->saveQuietly();
 
-                $this->line("Updated Work ID {$work->id}: {$oldCustomId} -> {$newCustomId}");
-                $counter++;
+                $this->line("Updated Work ID {$work->id} (Valuer: {$valuer}): {$oldCustomId} -> {$newCustomId}");
+                $counters[$valuer]++;
             }
         });
 
