@@ -506,7 +506,14 @@ public function worksForBankBranch(Request $request)
     {
         try {
             $validatedData = $request->validate([
-                'custom_id' => 'nullable|string|max:255|unique:works,custom_id',
+                'custom_id' => [
+                    'nullable',
+                    'string',
+                    'max:255',
+                    Rule::unique('works', 'custom_id')->where(function ($query) use ($request) {
+                        return $query->where('valuer', $request->input('valuer'));
+                    }),
+                ],
                 'assignment_date' => 'nullable|date',
                 'name_of_applicant' => 'required|string|max:255',
                 'number_of_applicants' => 'required|string|max:255',
@@ -600,7 +607,14 @@ public function worksForBankBranch(Request $request)
         try {
             // Validate Input
             $validatedData = $request->validate([
-                'custom_id' => 'nullable|string|max:255|unique:works,custom_id,' . $id,
+                'custom_id' => [
+                    'nullable',
+                    'string',
+                    'max:255',
+                    Rule::unique('works', 'custom_id')->where(function ($query) use ($request) {
+                        return $query->where('valuer', $request->input('valuer'));
+                    })->ignore($id),
+                ],
                 'assignment_date' => 'nullable|date',
                 'name_of_applicant' => 'required|string|max:255',
                 'number_of_applicants' => 'nullable|numeric',
