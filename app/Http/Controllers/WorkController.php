@@ -555,9 +555,7 @@ public function worksForBankBranch(Request $request)
             $work = Work::create($validatedData);
             
             // Auto-assign if status is special at creation
-            if (($validatedData['status'] ?? null) === 'Surveying') {
-                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
-            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+            if (($validatedData['status'] ?? null) === 'Reporting') {
                 $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
             } elseif (($validatedData['status'] ?? null) === 'Checking') {
                 $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
@@ -665,9 +663,7 @@ public function worksForBankBranch(Request $request)
             // Update Work
             $work->update($validatedData);
 
-            if (($validatedData['status'] ?? null) === 'Surveying') {
-                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
-            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+            if (($validatedData['status'] ?? null) === 'Reporting') {
                 $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
             } elseif (($validatedData['status'] ?? null) === 'Checking') {
                 $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
@@ -943,9 +939,7 @@ public function worksForBankBranch(Request $request)
 
             $work->update($validatedData);
 
-            if (($validatedData['status'] ?? null) === 'Surveying') {
-                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
-            } elseif (($validatedData['status'] ?? null) === 'Reporting') {
+            if (($validatedData['status'] ?? null) === 'Reporting') {
                 $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
             } elseif (($validatedData['status'] ?? null) === 'Checking') {
                 $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');
@@ -1017,9 +1011,7 @@ public function worksForBankBranch(Request $request)
 
             $work->update(['status' => $nextStatus]);
 
-            if ($nextStatus === 'Surveying') {
-                $this->autoAssignRole($work, 'Surveyor', 'Surveying', 'assignee_surveyor');
-            } elseif ($nextStatus === 'Reporting') {
+            if ($nextStatus === 'Reporting') {
                 $this->autoAssignRole($work, 'Reporter', 'Reporting', 'assignee_reporter');
             } elseif ($nextStatus === 'Checking') {
                 $this->autoAssignRole($work, 'Checker', 'Checking', 'assignee_checker');

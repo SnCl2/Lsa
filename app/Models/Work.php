@@ -116,11 +116,10 @@ class Work extends Model
                 $now = now();
                 $prefix = strtoupper($now->format('M')); // e.g., APR, MAY
 
-                // Find the latest work from the current month for this valuer
-                $lastWork = static::whereYear('created_at', $now->year)
-                    ->whereMonth('created_at', $now->month)
-                    ->where('valuer', $work->valuer)
-                    ->where('custom_id', 'like', $prefix . '-%')
+                // Find the latest work for this valuer (ignoring month/year to keep the counter continuous)
+                $lastWork = static::where('valuer', $work->valuer)
+                    ->whereNotNull('custom_id')
+                    ->where('custom_id', 'like', '%-%')
                     ->orderBy('id', 'desc')
                     ->first();
 
