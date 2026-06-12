@@ -19,7 +19,7 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="custom_id">Custom ID</label>
-                <input type="text" class="form-control" id="custom_id" name="custom_id" value="{{ $work->custom_id }}" >
+                <input type="text" class="form-control" id="custom_id" name="custom_id" value="{{ $work->custom_id }}" readonly>
             </div>
             <div class="form-group col-md-6">
                 <label for="assignment_date">Assignment Date</label>
