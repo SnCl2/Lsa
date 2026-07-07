@@ -199,21 +199,25 @@
 <style>
 /* Premium Aesthetic Variables & Base */
 :root {
-    --bg-light: #f8f9fc;
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    --bg-light: #eef2f6;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     
     --info-soft: #e0f2fe;
-    --info-text: #0284c7;
+    --info-text: #0369a1;
     --warning-soft: #fef3c7;
-    --warning-text: #d97706;
+    --warning-text: #b45309;
     --danger-soft: #fee2e2;
-    --danger-text: #dc2626;
+    --danger-text: #b91c1c;
 }
 
 body {
-    background-color: var(--bg-light);
+    background-color: var(--bg-light) !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.text-muted {
+    color: #475569 !important;
 }
 
 /* KPI Cards */
@@ -226,7 +230,7 @@ body {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.02);
+    border: 1px solid #d1d5db;
 }
 .kpi-card:hover {
     transform: translateY(-4px);
@@ -273,23 +277,28 @@ body {
 }
 
 /* Data Table */
-.data-card { border-radius: 16px; }
+.data-card { 
+    border-radius: 16px; 
+    border: 1px solid #d1d5db !important;
+}
 .premium-table { margin-bottom: 0; }
 .premium-table th {
     text-transform: uppercase;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.05em;
-    color: #64748b;
+    color: #334155;
+    background-color: #f1f5f9;
     border-top: none;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 2px solid #cbd5e1;
     padding: 16px 12px;
 }
 .premium-table td {
     padding: 16px 12px;
     vertical-align: middle;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 500;
 }
 .table-row-animate { transition: background-color 0.2s ease; }
 .table-row-animate:hover { background-color: #f8fafc; }
