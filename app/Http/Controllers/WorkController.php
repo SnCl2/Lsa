@@ -1370,4 +1370,97 @@ public function worksForBankBranch(Request $request)
             $work->{$assigneeColumn} = $selectedUserId;
         }
     }
+
+    public function dashboard(Request $request)
+    {
+        $now = \Carbon\Carbon::now();
+        
+        // 1. Total Work Volume (This month vs Last month)
+        $thisMonthCount = Work::whereMonth('assignment_date', $now->month)
+                               ->whereYear('assignment_date', $now->year)->count();
+        $lastMonthCount = Work::whereMonth('assignment_date', $now->copy()->subMonth()->month)
+                               ->whereYear('assignment_date', $now->copy()->subMonth()->year)->count();
+        
+        $volumeTrend = $lastMonthCount > 0 
+            ? round((($thisMonthCount - $lastMonthCount) / $lastMonthCount) * 100, 1) 
+            : ($thisMonthCount > 0 ? 100 : 0);
+
+        // 2. Financial Overview (This month)
+        $invoicedThisMonth = Work::whereMonth('billing_done_at', $now->month)
+                                 ->whereYear('billing_done_at', $now->year)
+                                 ->sum('invoice_amount');
+        
+        $pendingPaymentCount = Work::where('payment_status', 'Pending')->count();
+
+        // 3. Operational Efficiency
+        $avgReporting = Work::whereNotNull('reporting_started_at')
+                            ->whereNotNull('reporting_ended_at')
+                            ->get()
+                            ->avg('reporting_duration_minutes') ?? 0;
+                            
+        $avgChecking = Work::whereNotNull('checking_started_at')
+                           ->whereNotNull('checking_ended_at')
+                           ->get()
+                           ->avg('checking_duration_minutes') ?? 0;
+                           
+        $avgTurnaroundHours = round(($avgReporting + $avgChecking) / 60, 1);
+
+        // 4. Pending Deliverables
+        $pendingDeliverables = Work::where('delivery_status', 'Pending')
+                                   ->orWhere('is_printed', false)
+                                   ->count();
+
+        // 5. Work Inflow Trend (Last 6 months)
+        $months = [];
+        $inflowData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = $now->copy()->subMonths($i);
+            $months[] = $month->format('M Y');
+            $inflowData[] = Work::whereMonth('assignment_date', $month->month)
+                                ->whereYear('assignment_date', $month->year)
+                                ->count();
+        }
+
+        // 6. Status Distribution
+        $statusDistribution = Work::selectRaw('status, COUNT(*) as count')
+                                  ->groupBy('status')
+                                  ->pluck('count', 'status')
+                                  ->toArray();
+
+        // 7. Top Bank Branches
+        $topBranchesRaw = Work::select('bank_branch', \Illuminate\Support\Facades\DB::raw('COUNT(*) as count'))
+                           ->whereNotNull('bank_branch')
+                           ->groupBy('bank_branch')
+                           ->orderByDesc('count')
+                           ->limit(5)
+                           ->with('bankBranch')
+                           ->get();
+                           
+        $topBranches = [];
+        foreach ($topBranchesRaw as $item) {
+            $name = $item->bankBranch ? $item->bankBranch->name : 'Unknown';
+            $topBranches[$name] = $item->count;
+        }
+
+        // 8. Property Types Evaluated
+        $propertyTypes = \App\Models\Inspection::select('property_type', \Illuminate\Support\Facades\DB::raw('COUNT(*) as count'))
+                                              ->whereNotNull('property_type')
+                                              ->groupBy('property_type')
+                                              ->pluck('count', 'property_type')
+                                              ->toArray();
+
+        return view('works.dashboard', compact(
+            'thisMonthCount',
+            'volumeTrend',
+            'invoicedThisMonth',
+            'pendingPaymentCount',
+            'avgTurnaroundHours',
+            'pendingDeliverables',
+            'months',
+            'inflowData',
+            'statusDistribution',
+            'topBranches',
+            'propertyTypes'
+        ));
+    }
 }
