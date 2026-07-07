@@ -2,30 +2,23 @@
 
 @section('content')
 <div class="container-fluid mt-5" style="padding-left: 10px; padding-right: 10px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0 text-primary"><i class="fas fa-exclamation-circle"></i> Incomplete Works Dashboard</h1>
-    </div>
-
-    <!-- Month Filter -->
-    <div class="card mb-4 shadow-sm border-0 rounded-lg">
-        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-            <h5 class="mb-0 text-secondary font-weight-bold"><i class="fas fa-calendar-alt"></i> Filter by Month</h5>
-        </div>
-        <div class="card-body">
-            <form method="GET" action="{{ route('works.incomplete') }}" class="row align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label font-weight-bold text-muted small text-uppercase">Select Month</label>
-                    <input type="month" name="month" class="form-control bg-light" value="{{ $month }}">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 mt-2">
+        <h3 class="mb-0 text-primary"><i class="fas fa-exclamation-circle"></i> Incomplete Works</h3>
+        
+        <form method="GET" action="{{ route('works.incomplete') }}" class="form-inline mt-2 mt-md-0">
+            @if(request('search'))
+                <input type="hidden" name="search" value="{{ request('search') }}">
+            @endif
+            <div class="input-group input-group-sm shadow-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-light font-weight-bold border-right-0"><i class="fas fa-calendar-alt mr-2"></i> Month</span>
                 </div>
-                <!-- Preserve search if active -->
-                @if(request('search'))
-                    <input type="hidden" name="search" value="{{ request('search') }}">
-                @endif
-                <div class="col-md-2 mt-3 mt-md-0">
-                    <button type="submit" class="btn btn-primary w-100 shadow-sm"><i class="fas fa-filter"></i> Apply Filter</button>
+                <input type="month" name="month" class="form-control border-left-0" value="{{ $month }}">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     <!-- Age Categories (Tabs) -->
@@ -34,13 +27,17 @@
         <div class="col-md-4 mb-3 mb-md-0">
             <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'recent', 'search' => request('search')]) }}" class="text-decoration-none">
                 <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'recent' ? 'active-tab-recent shadow' : '' }}">
-                    <div class="card-body text-center py-4">
-                        <div class="icon-circle bg-info-light text-info mb-3 mx-auto">
-                            <i class="fas fa-clock fa-2x"></i>
+                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-info-light text-info mr-3 shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="fas fa-clock fa-lg"></i>
+                            </div>
+                            <div class="text-left">
+                                <h6 class="card-title font-weight-bold text-dark mb-0">Recent</h6>
+                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">< 5 Days</small>
+                            </div>
                         </div>
-                        <h4 class="card-title font-weight-bold text-dark mb-1">Recent</h4>
-                        <p class="text-muted mb-2 small font-weight-bold text-uppercase">< 5 Days Old</p>
-                        <h2 class="font-weight-bold text-info mb-0">{{ $recentCount }}</h2>
+                        <h3 class="font-weight-bold text-info mb-0">{{ $recentCount }}</h3>
                     </div>
                 </div>
             </a>
@@ -49,13 +46,17 @@
         <div class="col-md-4 mb-3 mb-md-0">
             <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'old', 'search' => request('search')]) }}" class="text-decoration-none">
                 <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'old' ? 'active-tab-old shadow' : '' }}">
-                    <div class="card-body text-center py-4">
-                        <div class="icon-circle bg-warning-light text-warning mb-3 mx-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-warning-light text-warning mr-3 shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                            </div>
+                            <div class="text-left">
+                                <h6 class="card-title font-weight-bold text-dark mb-0">Old</h6>
+                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">5 - 9 Days</small>
+                            </div>
                         </div>
-                        <h4 class="card-title font-weight-bold text-dark mb-1">Old</h4>
-                        <p class="text-muted mb-2 small font-weight-bold text-uppercase">5 to 9 Days Old</p>
-                        <h2 class="font-weight-bold text-warning mb-0">{{ $oldCount }}</h2>
+                        <h3 class="font-weight-bold text-warning mb-0">{{ $oldCount }}</h3>
                     </div>
                 </div>
             </a>
@@ -64,13 +65,17 @@
         <div class="col-md-4">
             <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'very_old', 'search' => request('search')]) }}" class="text-decoration-none">
                 <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'very_old' ? 'active-tab-very-old shadow' : '' }}">
-                    <div class="card-body text-center py-4">
-                        <div class="icon-circle bg-danger-light text-danger mb-3 mx-auto">
-                            <i class="fas fa-fire fa-2x"></i>
+                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-circle bg-danger-light text-danger mr-3 shadow-sm" style="width: 45px; height: 45px;">
+                                <i class="fas fa-fire fa-lg"></i>
+                            </div>
+                            <div class="text-left">
+                                <h6 class="card-title font-weight-bold text-dark mb-0">Very Old</h6>
+                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">10+ Days</small>
+                            </div>
                         </div>
-                        <h4 class="card-title font-weight-bold text-dark mb-1">Very Old</h4>
-                        <p class="text-muted mb-2 small font-weight-bold text-uppercase">10+ Days Old</p>
-                        <h2 class="font-weight-bold text-danger mb-0">{{ $veryOldCount }}</h2>
+                        <h3 class="font-weight-bold text-danger mb-0">{{ $veryOldCount }}</h3>
                     </div>
                 </div>
             </a>
@@ -92,10 +97,10 @@
             <form method="GET" action="{{ route('works.incomplete') }}" class="form-inline w-100 w-md-auto">
                 <input type="hidden" name="month" value="{{ $month }}">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                <div class="input-group w-100">
+                <div class="input-group input-group-sm w-100">
                     <input type="text" name="search" class="form-control bg-light border-0" placeholder="Search applicant, ID..." value="{{ request('search') }}">
                     <div class="input-group-append">
-                        <button class="btn btn-primary px-4" type="submit"><i class="fas fa-search"></i></button>
+                        <button class="btn btn-primary px-3" type="submit"><i class="fas fa-search"></i></button>
                     </div>
                 </div>
             </form>
@@ -225,8 +230,6 @@
 }
 
 .icon-circle {
-    width: 65px;
-    height: 65px;
     border-radius: 50%;
     display: flex;
     align-items: center;
