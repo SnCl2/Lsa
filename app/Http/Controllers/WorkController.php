@@ -774,64 +774,7 @@ public function worksForBankBranch(Request $request)
         return view('works.incomplete', compact('works', 'month', 'tab', 'recentCount', 'oldCount', 'veryOldCount', 'usersByRole'));
     }
 
-    public function dashboard()
-    {
-       // Get total works
-       $totalWorks = Work::count();
-
-       // Individual work status counts
-       $statusCounts = Work::selectRaw('status, COUNT(*) as count')
-           ->groupBy('status')
-           ->pluck('count', 'status');
-
-       // Loan amount statistics
-       $totalLoanAmount = Work::sum('loan_amount_requested');
-
-       // Payment status
-       $paymentCounts = Work::selectRaw('payment_status, COUNT(*) as count')
-           ->groupBy('payment_status')
-           ->pluck('count', 'payment_status');
-
-       // Delivery status
-       $deliveryCounts = Work::selectRaw('delivery_status, COUNT(*) as count')
-           ->groupBy('delivery_status')
-           ->pluck('count', 'delivery_status');
-
-       // Work type distribution
-       $workTypes = Work::selectRaw('work_type, COUNT(*) as count')
-           ->groupBy('work_type')
-           ->pluck('count', 'work_type');
-
-       // Time analytics (Reporting & Checking duration) - for admin
-       $reportingTimeStats = null;
-       $checkingTimeStats = null;
-       if (Schema::hasColumn('works', 'reporting_started_at')) {
-           $reportingTimeStats = Work::selectRaw('
-               COUNT(*) as count,
-               AVG(TIMESTAMPDIFF(MINUTE, reporting_started_at, reporting_ended_at)) as avg_minutes
-           ')
-           ->whereNotNull('reporting_started_at')
-           ->whereNotNull('reporting_ended_at')
-           ->first();
-       }
-       if (Schema::hasColumn('works', 'checking_started_at')) {
-           $checkingTimeStats = Work::selectRaw('
-               COUNT(*) as count,
-               AVG(TIMESTAMPDIFF(MINUTE, checking_started_at, checking_ended_at)) as avg_minutes
-           ')
-           ->whereNotNull('checking_started_at')
-           ->whereNotNull('checking_ended_at')
-           ->first();
-       }
-
-       return view('works.dashboard', compact(
-           'totalWorks', 'statusCounts',
-           'totalLoanAmount', 'paymentCounts', 
-           'deliveryCounts', 'workTypes',
-           'reportingTimeStats', 'checkingTimeStats'
-       ));
-   }
-   public function uploadFinalReports(Request $request, $id)
+    public function uploadFinalReports(Request $request, $id)
     {
         $request->validate([
             'final_report_pdf' => 'nullable|mimes:pdf|max:51200', // Allow only PDFs, max size 2MB
