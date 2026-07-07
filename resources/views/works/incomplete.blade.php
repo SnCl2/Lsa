@@ -1,181 +1,179 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid mt-5" style="padding-left: 10px; padding-right: 10px;">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 mt-2">
-        <h3 class="mb-0 text-primary"><i class="fas fa-exclamation-circle"></i> Incomplete Works</h3>
+<div class="container-fluid py-5" style="max-width: 1400px;">
+    <!-- Page Header & Filter -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-5">
+        <div>
+            <h2 class="font-weight-bolder text-dark mb-1" style="letter-spacing: -0.5px;">
+                Incomplete Works
+            </h2>
+            <p class="text-muted mb-0">Monitor and track ongoing tasks across different age categories.</p>
+        </div>
         
-        <form method="GET" action="{{ route('works.incomplete') }}" class="form-inline mt-2 mt-md-0">
+        <form method="GET" action="{{ route('works.incomplete') }}" class="d-flex align-items-center mt-3 mt-lg-0 p-2 bg-white rounded-pill shadow-sm" style="border: 1px solid #edf2f7;">
             @if(request('search'))
                 <input type="hidden" name="search" value="{{ request('search') }}">
             @endif
-            <div class="input-group input-group-sm shadow-sm">
-                <div class="input-group-prepend">
-                    <span class="input-group-text bg-light font-weight-bold border-right-0"><i class="fas fa-calendar-alt mr-2"></i> Month</span>
-                </div>
-                <input type="month" name="month" class="form-control border-left-0" value="{{ $month }}">
-                <div class="input-group-append">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
-                </div>
+            <div class="d-flex align-items-center px-3">
+                <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                <input type="month" name="month" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 150px;" value="{{ $month }}">
             </div>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 font-weight-bold" style="transition: transform 0.2s;">
+                Apply
+            </button>
         </form>
     </div>
 
-    <!-- Age Categories (Tabs) -->
-    <div class="row mb-4">
-        <!-- Recent Tab -->
+    <!-- KPI Cards (Tabs) -->
+    <div class="row mb-5">
+        <!-- Recent -->
         <div class="col-md-4 mb-3 mb-md-0">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'recent', 'search' => request('search')]) }}" class="text-decoration-none">
-                <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'recent' ? 'active-tab-recent shadow' : '' }}">
-                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle bg-info-light text-info mr-3 shadow-sm" style="width: 45px; height: 45px;">
-                                <i class="fas fa-clock fa-lg"></i>
-                            </div>
-                            <div class="text-left">
-                                <h6 class="card-title font-weight-bold text-dark mb-0">Recent</h6>
-                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">< 5 Days</small>
-                            </div>
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'recent', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+                <div class="kpi-card {{ $tab === 'recent' ? 'active-recent' : '' }}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="kpi-subtitle text-info mb-1">< 5 DAYS</p>
+                            <h4 class="kpi-title text-dark mb-0">Recent Tasks</h4>
                         </div>
-                        <h3 class="font-weight-bold text-info mb-0">{{ $recentCount }}</h3>
+                        <div class="kpi-number text-info">
+                            {{ $recentCount }}
+                        </div>
                     </div>
+                    <div class="kpi-bar bg-info mt-3" style="width: {{ $recentCount > 0 ? '100%' : '10%' }}; opacity: 0.2;"></div>
                 </div>
             </a>
         </div>
-        <!-- Old Tab -->
+        
+        <!-- Old -->
         <div class="col-md-4 mb-3 mb-md-0">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'old', 'search' => request('search')]) }}" class="text-decoration-none">
-                <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'old' ? 'active-tab-old shadow' : '' }}">
-                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle bg-warning-light text-warning mr-3 shadow-sm" style="width: 45px; height: 45px;">
-                                <i class="fas fa-exclamation-triangle fa-lg"></i>
-                            </div>
-                            <div class="text-left">
-                                <h6 class="card-title font-weight-bold text-dark mb-0">Old</h6>
-                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">5 - 9 Days</small>
-                            </div>
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'old', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+                <div class="kpi-card {{ $tab === 'old' ? 'active-old' : '' }}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="kpi-subtitle text-warning mb-1">5 - 9 DAYS</p>
+                            <h4 class="kpi-title text-dark mb-0">Aging Tasks</h4>
                         </div>
-                        <h3 class="font-weight-bold text-warning mb-0">{{ $oldCount }}</h3>
+                        <div class="kpi-number text-warning">
+                            {{ $oldCount }}
+                        </div>
                     </div>
+                    <div class="kpi-bar bg-warning mt-3" style="width: {{ $oldCount > 0 ? '100%' : '10%' }}; opacity: 0.4;"></div>
                 </div>
             </a>
         </div>
-        <!-- Very Old Tab -->
+
+        <!-- Very Old -->
         <div class="col-md-4">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'very_old', 'search' => request('search')]) }}" class="text-decoration-none">
-                <div class="card h-100 shadow-sm border-0 tab-card {{ $tab === 'very_old' ? 'active-tab-very-old shadow' : '' }}">
-                    <div class="card-body d-flex align-items-center justify-content-between py-2 px-3">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle bg-danger-light text-danger mr-3 shadow-sm" style="width: 45px; height: 45px;">
-                                <i class="fas fa-fire fa-lg"></i>
-                            </div>
-                            <div class="text-left">
-                                <h6 class="card-title font-weight-bold text-dark mb-0">Very Old</h6>
-                                <small class="text-muted font-weight-bold text-uppercase" style="font-size: 0.7rem;">10+ Days</small>
-                            </div>
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'very_old', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+                <div class="kpi-card {{ $tab === 'very_old' ? 'active-very-old' : '' }}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="kpi-subtitle text-danger mb-1">10+ DAYS</p>
+                            <h4 class="kpi-title text-dark mb-0">Critical Tasks</h4>
                         </div>
-                        <h3 class="font-weight-bold text-danger mb-0">{{ $veryOldCount }}</h3>
+                        <div class="kpi-number text-danger">
+                            {{ $veryOldCount }}
+                        </div>
                     </div>
+                    <div class="kpi-bar bg-danger mt-3" style="width: {{ $veryOldCount > 0 ? '100%' : '10%' }}; opacity: 0.2;"></div>
                 </div>
             </a>
         </div>
     </div>
 
-    <!-- Data Table Card -->
-    <div class="card shadow-sm border-0 rounded-lg">
-        <div class="card-header bg-white py-4 d-flex flex-column flex-md-row justify-content-between align-items-center border-bottom">
-            <h5 class="mb-3 mb-md-0 font-weight-bold text-dark">
-                <i class="fas fa-list-ul text-primary mr-2"></i> 
-                Incomplete Works
-                @if($tab === 'recent') <span class="badge badge-info ml-2">Recent (< 5 Days)</span>
-                @elseif($tab === 'old') <span class="badge badge-warning text-dark ml-2">Old (5-9 Days)</span>
-                @elseif($tab === 'very_old') <span class="badge badge-danger ml-2">Very Old (10+ Days)</span>
+    <!-- Main Data Table -->
+    <div class="card data-card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-white py-4 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom border-light">
+            <h5 class="mb-3 mb-md-0 font-weight-bolder text-dark">
+                Task List
+                @if($tab === 'recent') <span class="badge premium-badge bg-info-soft text-info ml-2">Recent</span>
+                @elseif($tab === 'old') <span class="badge premium-badge bg-warning-soft text-warning ml-2">Old</span>
+                @elseif($tab === 'very_old') <span class="badge premium-badge bg-danger-soft text-danger ml-2">Very Old</span>
                 @endif
             </h5>
             
-            <form method="GET" action="{{ route('works.incomplete') }}" class="form-inline w-100 w-md-auto">
+            <form method="GET" action="{{ route('works.incomplete') }}" class="m-0">
                 <input type="hidden" name="month" value="{{ $month }}">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                <div class="input-group input-group-sm w-100">
-                    <input type="text" name="search" class="form-control bg-light border-0" placeholder="Search applicant, ID..." value="{{ request('search') }}">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary px-3" type="submit"><i class="fas fa-search"></i></button>
-                    </div>
+                <div class="search-box">
+                    <i class="fas fa-search text-muted ml-3"></i>
+                    <input type="text" name="search" class="form-control border-0 shadow-none pl-2 pr-3" placeholder="Search applicant, ID..." value="{{ request('search') }}">
                 </div>
             </form>
         </div>
         
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-muted small text-uppercase">
+                <table class="table premium-table align-middle mb-0">
+                    <thead>
                         <tr>
                             <th class="pl-4">Age</th>
-                            <th>Created Date</th>
-                            <th>Custom ID</th>
+                            <th>Details</th>
                             <th>Applicant</th>
-                            <th>Current Status</th>
-                            <th>Assigned Users</th>
-                            <th class="pr-4 text-center">Action</th>
+                            <th>Status</th>
+                            <th>Team</th>
+                            <th class="pr-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($works as $work)
                             @php
                                 $daysOld = max(0, intval($work->created_at->startOfDay()->diffInDays(now()->startOfDay())));
-                                $badgeClass = 'badge-info';
-                                if($daysOld >= 10) $badgeClass = 'badge-danger';
-                                elseif($daysOld >= 5) $badgeClass = 'badge-warning text-dark';
+                                $badgeClass = 'bg-info-soft text-info';
+                                if($daysOld >= 10) $badgeClass = 'bg-danger-soft text-danger';
+                                elseif($daysOld >= 5) $badgeClass = 'bg-warning-soft text-warning';
                             @endphp
-                            <tr>
+                            <tr class="table-row-animate">
                                 <td class="pl-4">
-                                    <span class="badge {{ $badgeClass }} px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem;">
+                                    <span class="premium-badge {{ $badgeClass }}">
                                         {{ $daysOld }} {{ $daysOld == 1 ? 'Day' : 'Days' }}
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="font-weight-bold text-dark">{{ $work->created_at->format('d M, Y') }}</div>
-                                    <div class="small text-muted">{{ $work->created_at->format('h:i A') }}</div>
-                                </td>
-                                <td>
-                                    <span class="font-weight-bold text-primary">{{ $work->custom_id ?? 'N/A' }}</span>
+                                    <div class="font-weight-bolder text-dark">{{ $work->custom_id ?? 'N/A' }}</div>
+                                    <div class="text-muted small">
+                                        <i class="far fa-calendar-alt mr-1"></i> {{ $work->created_at->format('d M, Y') }}
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="font-weight-bold text-dark">{{ $work->name_of_applicant }}</div>
                                     @if($work->project_name)
-                                        <div class="small text-muted text-truncate" style="max-width: 150px;">{{ $work->project_name }}</div>
+                                        <div class="text-muted small text-truncate" style="max-width: 200px;">{{ $work->project_name }}</div>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge badge-secondary px-2 py-1">{{ $work->status }}</span>
-                                    @if($work->result)
-                                        <span class="badge badge-dark px-2 py-1 ml-1">{{ $work->result }}</span>
-                                    @endif
+                                    <div class="d-flex flex-column align-items-start">
+                                        <span class="badge badge-light border border-secondary text-secondary mb-1 px-2 py-1">{{ $work->status }}</span>
+                                        @if($work->result)
+                                            <span class="badge badge-dark px-2 py-1">{{ $work->result }}</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
-                                    <div class="small">
-                                        <span class="text-muted">S:</span> <span class="font-weight-bold">{{ $work->surveyor?->name ?? '-' }}</span><br>
-                                        <span class="text-muted">R:</span> <span class="font-weight-bold">{{ $work->reporter?->name ?? '-' }}</span><br>
-                                        <span class="text-muted">C:</span> <span class="font-weight-bold">{{ $work->checker?->name ?? '-' }}</span>
+                                    <div class="team-avatars">
+                                        @if($work->surveyor)<div class="avatar" title="Surveyor: {{ $work->surveyor->name }}">{{ substr($work->surveyor->name, 0, 1) }}</div>@endif
+                                        @if($work->reporter)<div class="avatar bg-primary" title="Reporter: {{ $work->reporter->name }}">{{ substr($work->reporter->name, 0, 1) }}</div>@endif
+                                        @if($work->checker)<div class="avatar bg-success" title="Checker: {{ $work->checker->name }}">{{ substr($work->checker->name, 0, 1) }}</div>@endif
+                                        @if(!$work->surveyor && !$work->reporter && !$work->checker)
+                                            <span class="text-muted small">Unassigned</span>
+                                        @endif
                                     </div>
                                 </td>
-                                <td class="pr-4 text-center">
-                                    <div class="btn-group shadow-sm" role="group">
-                                        <a href="{{ route('works.show', $work->id) }}" class="btn btn-sm btn-light text-primary border" title="View"><i class="fas fa-eye"></i></a>
-                                        <a href="{{ route('works.edit', $work->id) }}" class="btn btn-sm btn-light text-warning border" title="Edit"><i class="fas fa-edit"></i></a>
-                                    </div>
+                                <td class="pr-4 text-right">
+                                    <a href="{{ route('works.show', $work->id) }}" class="action-btn text-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('works.edit', $work->id) }}" class="action-btn text-warning ml-2" title="Edit"><i class="fas fa-pen"></i></a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <div class="text-muted py-4">
-                                        <div class="icon-circle bg-light text-secondary mx-auto mb-3" style="width: 80px; height: 80px;">
-                                            <i class="fas fa-inbox fa-3x"></i>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                            <i class="fas fa-check-circle fa-2x text-success" style="opacity: 0.5;"></i>
                                         </div>
-                                        <h5 class="font-weight-bold">No works found</h5>
-                                        <p>There are no incomplete works in this category for the selected month.</p>
+                                        <h5 class="font-weight-bold text-dark">All Caught Up!</h5>
+                                        <p class="text-muted">There are no tasks pending in this category.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -184,15 +182,14 @@
                 </table>
             </div>
         </div>
+        
         @if($works->hasPages())
-        <div class="card-footer bg-white border-top py-3 px-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <small class="text-muted font-weight-bold mb-3 mb-md-0">
-                    Showing {{ $works->firstItem() ?? 0 }} to {{ $works->lastItem() ?? 0 }} of {{ $works->total() }} entries
-                </small>
-                <div>
-                    {{ $works->links() }}
-                </div>
+        <div class="card-footer bg-white border-top border-light py-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <small class="text-muted font-weight-bold mb-3 mb-md-0">
+                Showing {{ $works->firstItem() ?? 0 }} to {{ $works->lastItem() ?? 0 }} of {{ $works->total() }} entries
+            </small>
+            <div class="custom-pagination">
+                {{ $works->links() }}
             </div>
         </div>
         @endif
@@ -200,62 +197,152 @@
 </div>
 
 <style>
-/* Dashboard Styles */
-.rounded-lg { border-radius: 0.75rem !important; }
-.rounded-pill { border-radius: 50rem !important; }
-
-.tab-card {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    cursor: pointer;
-    border-radius: 12px;
-    background-color: #f8f9fa;
-}
-.tab-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    background-color: #ffffff;
+/* Premium Aesthetic Variables & Base */
+:root {
+    --bg-light: #f8f9fc;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    
+    --info-soft: #e0f2fe;
+    --info-text: #0284c7;
+    --warning-soft: #fef3c7;
+    --warning-text: #d97706;
+    --danger-soft: #fee2e2;
+    --danger-text: #dc2626;
 }
 
-.active-tab-recent {
-    background-color: #ffffff;
-    border-bottom: 4px solid #17a2b8 !important;
-}
-.active-tab-old {
-    background-color: #ffffff;
-    border-bottom: 4px solid #ffc107 !important;
-}
-.active-tab-very-old {
-    background-color: #ffffff;
-    border-bottom: 4px solid #dc3545 !important;
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.icon-circle {
+/* KPI Cards */
+.block-link { display: block; }
+.kpi-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+}
+.kpi-subtitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.kpi-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+.kpi-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+}
+.kpi-bar {
+    height: 4px;
+    border-radius: 2px;
+    transition: width 1s ease-out;
+}
+
+.active-recent { border-bottom: 4px solid #0dcaf0; }
+.active-old { border-bottom: 4px solid #ffc107; }
+.active-very-old { border-bottom: 4px solid #dc3545; }
+
+/* Custom Search Box */
+.search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-light);
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    width: 250px;
+    transition: all 0.2s ease;
+}
+.search-box:focus-within {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    background: #ffffff;
+}
+
+/* Data Table */
+.data-card { border-radius: 16px; }
+.premium-table { margin-bottom: 0; }
+.premium-table th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    border-top: none;
+    border-bottom: 2px solid #f1f5f9;
+    padding: 16px 12px;
+}
+.premium-table td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+.table-row-animate { transition: background-color 0.2s ease; }
+.table-row-animate:hover { background-color: #f8fafc; }
+
+/* Soft Badges */
+.premium-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+.bg-info-soft { background-color: var(--info-soft); }
+.text-info { color: var(--info-text) !important; }
+.bg-warning-soft { background-color: var(--warning-soft); }
+.text-warning { color: var(--warning-text) !important; }
+.bg-danger-soft { background-color: var(--danger-soft); }
+.text-danger { color: var(--danger-text) !important; }
+
+/* Team Avatars */
+.team-avatars { display: flex; align-items: center; }
+.avatar {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    background: #64748b;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 2px solid white;
+    margin-left: -8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
 }
-.bg-info-light { background-color: rgba(23, 162, 184, 0.1); }
-.bg-warning-light { background-color: rgba(255, 193, 7, 0.15); }
-.bg-danger-light { background-color: rgba(220, 53, 69, 0.1); }
+.avatar:first-child { margin-left: 0; }
+.avatar:hover { transform: translateY(-2px); z-index: 10; }
 
-.table th { 
-    border-top: none; 
-    letter-spacing: 0.5px;
-    font-weight: 600;
+/* Actions */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: all 0.2s;
 }
-.table td {
-    vertical-align: middle;
-}
-.table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.03);
-}
-
-.btn-light {
-    background-color: #f8f9fa;
-}
-.btn-light:hover {
-    background-color: #e2e6ea;
+.action-btn:hover {
+    background: #e2e8f0;
+    transform: scale(1.05);
 }
 </style>
 @endsection
