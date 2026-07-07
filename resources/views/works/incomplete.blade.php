@@ -15,14 +15,14 @@
             <form method="GET" action="{{ route('works.incomplete') }}" class="row align-items-end">
                 <div class="col-md-3">
                     <label class="form-label font-weight-bold text-muted small text-uppercase">Select Month</label>
-                    <input type="month" name="month" class="form-control form-control-lg bg-light" value="{{ $month }}">
+                    <input type="month" name="month" class="form-control bg-light" value="{{ $month }}">
                 </div>
                 <!-- Preserve search if active -->
                 @if(request('search'))
                     <input type="hidden" name="search" value="{{ request('search') }}">
                 @endif
                 <div class="col-md-2 mt-3 mt-md-0">
-                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm"><i class="fas fa-filter"></i> Apply Filter</button>
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm"><i class="fas fa-filter"></i> Apply Filter</button>
                 </div>
             </form>
         </div>
@@ -40,7 +40,7 @@
                         </div>
                         <h4 class="card-title font-weight-bold text-dark mb-1">Recent</h4>
                         <p class="text-muted mb-2 small font-weight-bold text-uppercase">< 5 Days Old</p>
-                        <h1 class="font-weight-bold text-info display-4 mb-0">{{ $recentCount }}</h1>
+                        <h2 class="font-weight-bold text-info mb-0">{{ $recentCount }}</h2>
                     </div>
                 </div>
             </a>
@@ -55,7 +55,7 @@
                         </div>
                         <h4 class="card-title font-weight-bold text-dark mb-1">Old</h4>
                         <p class="text-muted mb-2 small font-weight-bold text-uppercase">5 to 9 Days Old</p>
-                        <h1 class="font-weight-bold text-warning display-4 mb-0">{{ $oldCount }}</h1>
+                        <h2 class="font-weight-bold text-warning mb-0">{{ $oldCount }}</h2>
                     </div>
                 </div>
             </a>
@@ -70,7 +70,7 @@
                         </div>
                         <h4 class="card-title font-weight-bold text-dark mb-1">Very Old</h4>
                         <p class="text-muted mb-2 small font-weight-bold text-uppercase">10+ Days Old</p>
-                        <h1 class="font-weight-bold text-danger display-4 mb-0">{{ $veryOldCount }}</h1>
+                        <h2 class="font-weight-bold text-danger mb-0">{{ $veryOldCount }}</h2>
                     </div>
                 </div>
             </a>
@@ -118,7 +118,7 @@
                     <tbody>
                         @forelse($works as $work)
                             @php
-                                $daysOld = now()->diffInDays($work->created_at);
+                                $daysOld = max(0, intval($work->created_at->startOfDay()->diffInDays(now()->startOfDay())));
                                 $badgeClass = 'badge-info';
                                 if($daysOld >= 10) $badgeClass = 'badge-danger';
                                 elseif($daysOld >= 5) $badgeClass = 'badge-warning text-dark';
