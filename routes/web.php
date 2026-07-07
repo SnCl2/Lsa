@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('users/{user}/toggle-login', [UserController::class, 'toggleLogin'])->name('users.toggleLogin');
         Route::resource('roles', UserRoleController::class)->except(['show']);
         Route::get('works/index', [WorkController::class, 'index'])->name('works.index');
+        Route::get('works/incomplete', [WorkController::class, 'incomplete'])->name('works.incomplete');
         Route::get('works/export', [WorkController::class, 'export'])->name('works.export');
         Route::get('work/status', [WorkController::class, 'get_work_by_status'])->name('works.status');
         Route::get('works/dashboard', [WorkController::class, 'dashboard'])->name('works.dashboard');

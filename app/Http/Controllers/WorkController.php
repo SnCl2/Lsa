@@ -718,6 +718,62 @@ public function worksForBankBranch(Request $request)
 
 
 
+    public function incomplete(Request $request)
+    {
+        // 1. Get the month (default current month)
+        $month = $request->input('month', now()->format('Y-m'));
+        $parts = explode('-', $month);
+        $year = $parts[0] ?? now()->format('Y');
+        $monthNum = $parts[1] ?? now()->format('m');
+
+        // 2. Base query for incomplete works for the selected month
+        $baseQuery = Work::with([
+            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch'
+        ])
+        ->where('status', '!=', 'Completed')
+        ->whereYear('created_at', $year)
+        ->whereMonth('created_at', $monthNum);
+
+        // Apply search if provided
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('name_of_applicant', 'like', "%{$search}%")
+                  ->orWhere('custom_id', 'like', "%{$search}%")
+                  ->orWhere('source', 'like', "%{$search}%")
+                  ->orWhereHas('bankBranch', function($qb) use ($search) {
+                      $qb->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 3. Calculate Date Boundaries
+        $fiveDaysAgo = now()->subDays(5);
+        $tenDaysAgo = now()->subDays(10);
+
+        // 4. Get counts for each tab using clones
+        $recentCount = (clone $baseQuery)->where('created_at', '>=', $fiveDaysAgo)->count();
+        $oldCount = (clone $baseQuery)->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo)->count();
+        $veryOldCount = (clone $baseQuery)->where('created_at', '<', $tenDaysAgo)->count();
+
+        // 5. Apply the active tab filter
+        $tab = $request->input('tab', 'recent');
+        if ($tab === 'recent') {
+            $baseQuery->where('created_at', '>=', $fiveDaysAgo);
+        } elseif ($tab === 'old') {
+            $baseQuery->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo);
+        } elseif ($tab === 'very_old') {
+            $baseQuery->where('created_at', '<', $tenDaysAgo);
+        }
+
+        // 6. Get the paginated results
+        $works = $baseQuery->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        $usersByRole = $this->getUsersByRole();
+
+        return view('works.incomplete', compact('works', 'month', 'tab', 'recentCount', 'oldCount', 'veryOldCount', 'usersByRole'));
+    }
+
     public function dashboard()
     {
        // Get total works

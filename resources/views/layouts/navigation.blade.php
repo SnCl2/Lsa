@@ -62,6 +62,9 @@
                         <x-nav-link :href="route('role-wise.index')" :active="request()->routeIs('role-wise.*')">
                             {{ __('Role-wise Management') }}
                         </x-nav-link> 
+                        <x-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
+                            {{ __('Incomplete Works') }}
+                        </x-nav-link>
                         
                     @endif
                     @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin') || auth()->user()->roles->contains('name', 'Accountant'))
@@ -135,6 +138,9 @@
 
                 <x-responsive-nav-link :href="route('role-wise.index')" :active="request()->routeIs('role-wise.*')">
                     {{ __('Role-wise Management') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
+                    {{ __('Incomplete Works') }}
                 </x-responsive-nav-link>
                 
             @endif
