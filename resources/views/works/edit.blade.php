@@ -113,6 +113,20 @@
             </div>
         </div>
         <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="actual_value">Actual Value</label>
+                <input type="number" step="0.01" class="form-control" id="actual_value" name="actual_value" value="{{ $work->actual_value }}" placeholder="Enter Actual Value">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="realised_value">Realised Value</label>
+                <input type="number" step="0.01" class="form-control" id="realised_value" name="realised_value" value="{{ $work->realised_value }}" placeholder="Enter Realised Value">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="fair_market_value">Fair Market Value</label>
+                <input type="number" step="0.01" class="form-control" id="fair_market_value" name="fair_market_value" value="{{ $work->fair_market_value }}" placeholder="Enter Fair Market Value">
+            </div>
+        </div>
+        <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="work_type">Work Type</label>
                 <select class="form-control" id="work_type" name="work_type" required>

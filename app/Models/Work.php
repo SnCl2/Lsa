@@ -83,6 +83,9 @@ class Work extends Model
         'invoice_amount',
         'amount_without_gst',
         'gst_amount',
+        'actual_value',
+        'realised_value',
+        'fair_market_value',
     ];
 
     protected $casts = [
@@ -94,6 +97,9 @@ class Work extends Model
         'is_billing_done' => 'boolean',
         'billing_done_at' => 'datetime',
         'invoice_date' => 'date',
+        'actual_value' => 'decimal:2',
+        'realised_value' => 'decimal:2',
+        'fair_market_value' => 'decimal:2',
         'report_submit_date' => 'date',
         'reporting_started_at' => 'datetime',
         'reporting_ended_at' => 'datetime',

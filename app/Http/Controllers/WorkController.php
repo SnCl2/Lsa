@@ -543,6 +543,9 @@ public function worksForBankBranch(Request $request)
                 'assignee_reporter' => 'nullable|integer|exists:users,id',
                 'assignee_checker' => 'nullable|integer|exists:users,id',
                 'assignee_delivery' => 'nullable|integer|exists:users,id',
+                'actual_value' => 'nullable|numeric|min:0',
+                'realised_value' => 'nullable|numeric|min:0',
+                'fair_market_value' => 'nullable|numeric|min:0',
             ]);
 
             if ($request->hasFile('pdf_1')) {
@@ -642,6 +645,9 @@ public function worksForBankBranch(Request $request)
                 'assignee_reporter' => 'nullable|integer|exists:users,id',
                 'assignee_checker' => 'nullable|integer|exists:users,id',
                 'assignee_delivery' => 'nullable|integer|exists:users,id',
+                'actual_value' => 'nullable|numeric|min:0',
+                'realised_value' => 'nullable|numeric|min:0',
+                'fair_market_value' => 'nullable|numeric|min:0',
             ]);
     
             // Find Work Entry

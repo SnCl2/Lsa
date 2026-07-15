@@ -84,6 +84,23 @@
                 </div>
             </div>
 
+            <!-- Valuation Details -->
+            <h5 class="mt-4 mb-3">Valuation Details</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Actual Value:</label>
+                    <p class="form-control-plaintext">{{ $work->actual_value !== null ? '₹' . number_format($work->actual_value, 2) : 'N/A' }}</p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Realised Value:</label>
+                    <p class="form-control-plaintext">{{ $work->realised_value !== null ? '₹' . number_format($work->realised_value, 2) : 'N/A' }}</p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fair Market Value:</label>
+                    <p class="form-control-plaintext">{{ $work->fair_market_value !== null ? '₹' . number_format($work->fair_market_value, 2) : 'N/A' }}</p>
+                </div>
+            </div>
+
             <!-- Status Information -->
             <h5 class="mt-4 mb-3">Work & Payment Status</h5>
             <div class="row">

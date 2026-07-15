@@ -141,6 +141,7 @@
                             <th>Applicant</th>
                             <th>Bank Branch</th>
                             <th>Loan Amount</th>
+                            <th>Valuation Values</th>
                             <th>Work Type</th>
                             <th>Result</th>
                             @if($tab !== 'pending')
@@ -169,6 +170,11 @@
                             <td>{{ $work->name_of_applicant }}</td>
                             <td>{{ $work->bankBranch?->name ?? 'N/A' }}</td>
                             <td>{{ $work->loan_amount_requested }}</td>
+                            <td>
+                                <div class="small"><strong>Actual:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
+                                <div class="small"><strong>Realised:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
+                                <div class="small"><strong>Fair:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
+                            </td>
                             <td>{{ $work->work_type }}</td>
                             <td>{{ $work->result ?? '—' }}</td>
                             @if($tab !== 'pending')
@@ -201,7 +207,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ $tab === 'pending' ? 9 : 12 }}" class="text-center text-muted py-4">No works found.</td>
+                            <td colspan="{{ $tab === 'pending' ? 10 : 13 }}" class="text-center text-muted py-4">No works found.</td>
                         </tr>
                         @endforelse
                     </tbody>

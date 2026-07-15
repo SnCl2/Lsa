@@ -111,6 +111,7 @@
                             <th class="pl-4">Age</th>
                             <th>Details</th>
                             <th>Applicant</th>
+                            <th>Valuation Values</th>
                             <th>Status</th>
                             <th>Team</th>
                             <th class="pr-4 text-right">Actions</th>
@@ -141,6 +142,11 @@
                                     @if($work->project_name)
                                         <div class="text-muted small text-truncate" style="max-width: 200px;">{{ $work->project_name }}</div>
                                     @endif
+                                </td>
+                                <td>
+                                    <div class="small"><strong>Actual:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
+                                    <div class="small"><strong>Realised:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
+                                    <div class="small"><strong>Fair:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column align-items-start">
