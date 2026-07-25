@@ -15,6 +15,18 @@
             @if(request('search'))
                 <input type="hidden" name="search" value="{{ request('search') }}">
             @endif
+            @if(request('tab'))
+                <input type="hidden" name="tab" value="{{ request('tab') }}">
+            @endif
+            <div class="d-flex align-items-center px-3" style="border-right: 1px solid #edf2f7;">
+                <i class="fas fa-university text-primary mr-2"></i>
+                <select name="bank_branch" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 180px; padding: 0; height: auto;">
+                    <option value="">All Branches</option>
+                    @foreach($usersByRole['Bank Branch'] as $id => $name)
+                        <option value="{{ $id }}" {{ (string)request('bank_branch') === (string)$id ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="d-flex align-items-center px-3">
                 <i class="fas fa-calendar-alt text-primary mr-2"></i>
                 <input type="month" name="month" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 150px;" value="{{ $month }}">
@@ -29,7 +41,7 @@
     <div class="row mb-5">
         <!-- Recent -->
         <div class="col-md-4 mb-3 mb-md-0">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'recent', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'recent', 'search' => request('search'), 'bank_branch' => request('bank_branch')]) }}" class="text-decoration-none block-link">
                 <div class="kpi-card {{ $tab === 'recent' ? 'active-recent' : '' }}">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -47,7 +59,7 @@
         
         <!-- Old -->
         <div class="col-md-4 mb-3 mb-md-0">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'old', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'old', 'search' => request('search'), 'bank_branch' => request('bank_branch')]) }}" class="text-decoration-none block-link">
                 <div class="kpi-card {{ $tab === 'old' ? 'active-old' : '' }}">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -65,7 +77,7 @@
 
         <!-- Very Old -->
         <div class="col-md-4">
-            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'very_old', 'search' => request('search')]) }}" class="text-decoration-none block-link">
+            <a href="{{ route('works.incomplete', ['month' => $month, 'tab' => 'very_old', 'search' => request('search'), 'bank_branch' => request('bank_branch')]) }}" class="text-decoration-none block-link">
                 <div class="kpi-card {{ $tab === 'very_old' ? 'active-very-old' : '' }}">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -96,6 +108,9 @@
             <form method="GET" action="{{ route('works.incomplete') }}" class="m-0">
                 <input type="hidden" name="month" value="{{ $month }}">
                 <input type="hidden" name="tab" value="{{ $tab }}">
+                @if(request('bank_branch'))
+                    <input type="hidden" name="bank_branch" value="{{ request('bank_branch') }}">
+                @endif
                 <div class="search-box">
                     <i class="fas fa-search text-muted ml-3"></i>
                     <input type="text" name="search" class="form-control border-0 shadow-none pl-2 pr-3" placeholder="Search applicant, ID..." value="{{ request('search') }}">
@@ -144,9 +159,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="small"><strong>Actual:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
-                                    <div class="small"><strong>Realised:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
-                                    <div class="small"><strong>Fair:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
+                                    <div class="small"><strong>FMV:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
+                                    <div class="small"><strong>RV:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
+                                    <div class="small"><strong>DV:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column align-items-start">

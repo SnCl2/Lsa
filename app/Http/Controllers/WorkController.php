@@ -753,6 +753,11 @@ public function worksForBankBranch(Request $request)
             });
         }
 
+        // Filter by Bank Branch if provided
+        if ($request->filled('bank_branch')) {
+            $baseQuery->where('bank_branch', (int)$request->bank_branch);
+        }
+
         // 3. Calculate Date Boundaries
         $fiveDaysAgo = now()->subDays(5);
         $tenDaysAgo = now()->subDays(10);

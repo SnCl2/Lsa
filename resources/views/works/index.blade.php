@@ -426,9 +426,9 @@
                         <td>{{ $work->bankBranch?->name ?? 'N/A' }}</td>
                         <td>{{ $work->loan_amount_requested }}</td>
                         <td>
-                            <div class="small"><strong>Actual:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
-                            <div class="small"><strong>Realised:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
-                            <div class="small"><strong>Fair:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
+                            <div class="small"><strong>FMV:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
+                            <div class="small"><strong>RV:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
+                            <div class="small"><strong>DV:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
                         </td>
                         <td>{{ $work->work_type }} <br>{{ $work->inspection->property_type ?? 'N/A'}} </td>
                         @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))

@@ -147,16 +147,16 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label for="actual_value">Actual Value</label>
-                <input type="number" step="0.01" class="form-control" id="actual_value" name="actual_value" placeholder="Enter Actual Value">
+                <label for="actual_value">FMV</label>
+                <input type="number" step="0.01" class="form-control" id="actual_value" name="actual_value" placeholder="Enter FMV">
             </div>
             <div class="form-group col-md-4">
-                <label for="realised_value">Realised Value</label>
-                <input type="number" step="0.01" class="form-control" id="realised_value" name="realised_value" placeholder="Enter Realised Value">
+                <label for="realised_value">RV</label>
+                <input type="number" step="0.01" class="form-control" id="realised_value" name="realised_value" placeholder="Enter RV">
             </div>
             <div class="form-group col-md-4">
-                <label for="fair_market_value">Fair Market Value</label>
-                <input type="number" step="0.01" class="form-control" id="fair_market_value" name="fair_market_value" placeholder="Enter Fair Market Value">
+                <label for="fair_market_value">DV</label>
+                <input type="number" step="0.01" class="form-control" id="fair_market_value" name="fair_market_value" placeholder="Enter DV">
             </div>
         </div>
         <div class="form-row">
