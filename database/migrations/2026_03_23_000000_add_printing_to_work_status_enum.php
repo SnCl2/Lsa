@@ -14,7 +14,9 @@ return new class extends Migration
     {
         // Add 'Printing' and 'On Delivery' to the status enum
         // Existing: 'New File', 'Surveying', 'Reporting', 'Checking', 'Completed', 'Hold', 'Canceled'
-        DB::statement("ALTER TABLE works MODIFY COLUMN status ENUM('New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed', 'Hold', 'Canceled', 'On Delivery') NOT NULL DEFAULT 'New File'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE works MODIFY COLUMN status ENUM('New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed', 'Hold', 'Canceled', 'On Delivery') NOT NULL DEFAULT 'New File'");
+        }
     }
 
     /**
@@ -23,6 +25,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert to previous enum values
-        DB::statement("ALTER TABLE works MODIFY COLUMN status ENUM('New File', 'Surveying', 'Reporting', 'Checking', 'Completed', 'Hold', 'Canceled') NOT NULL DEFAULT 'New File'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE works MODIFY COLUMN status ENUM('New File', 'Surveying', 'Reporting', 'Checking', 'Completed', 'Hold', 'Canceled') NOT NULL DEFAULT 'New File'");
+        }
     }
 };

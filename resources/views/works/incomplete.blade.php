@@ -126,6 +126,7 @@
                             <th class="pl-4">Age</th>
                             <th>Details</th>
                             <th>Applicant</th>
+                            <th>Bank Branch</th>
                             <th>Valuation Values</th>
                             <th>Status</th>
                             <th>Team</th>
@@ -159,6 +160,13 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if($work->bankBranch)
+                                        <div class="font-weight-bold text-dark">{{ $work->bankBranch->name }}</div>
+                                    @else
+                                        <span class="text-muted small">N/A</span>
+                                    @endif
+                                </td>
+                                <td>
                                     <div class="small"><strong>FMV:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>
                                     <div class="small"><strong>RV:</strong> {{ $work->realised_value !== null ? number_format($work->realised_value, 2) : '—' }}</div>
                                     <div class="small"><strong>DV:</strong> {{ $work->fair_market_value !== null ? number_format($work->fair_market_value, 2) : '—' }}</div>
@@ -188,7 +196,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="8" class="text-center py-5">
                                     <div class="empty-state">
                                         <div class="empty-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                                             <i class="fas fa-check-circle fa-2x text-success" style="opacity: 0.5;"></i>
