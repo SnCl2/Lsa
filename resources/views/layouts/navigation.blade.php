@@ -65,6 +65,9 @@
                         <x-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
                             {{ __('Incomplete Works') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('works.daily-report')" :active="request()->routeIs('works.daily-report')">
+                            {{ __('Daily Report') }}
+                        </x-nav-link>
                         
                     @endif
                     @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin') || auth()->user()->roles->contains('name', 'Accountant'))
@@ -141,6 +144,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
                     {{ __('Incomplete Works') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('works.daily-report')" :active="request()->routeIs('works.daily-report')">
+                    {{ __('Daily Report') }}
                 </x-responsive-nav-link>
                 
             @endif

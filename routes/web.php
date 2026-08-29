@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('works/export', [WorkController::class, 'export'])->name('works.export');
         Route::get('work/status', [WorkController::class, 'get_work_by_status'])->name('works.status');
         Route::get('works/dashboard', [WorkController::class, 'dashboard'])->name('works.dashboard');
+        Route::get('works/daily-report', [\App\Http\Controllers\DailyReportController::class, 'index'])->name('works.daily-report');
         Route::get('role-wise', [RoleWiseController::class, 'index'])->name('role-wise.index');
         Route::get('role-wise/stats/{roleName}', [RoleWiseController::class, 'getRoleStats'])->name('role-wise.stats');
     });

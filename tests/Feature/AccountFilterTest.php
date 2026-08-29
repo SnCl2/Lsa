@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Work;
-use App\Models\UserRole;
+use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,7 +18,7 @@ class AccountFilterTest extends TestCase
         
         // Setup necessary data
         $accountant = User::factory()->create();
-        $role = UserRole::create(['name' => 'Accountant']);
+        $role = Role::firstOrCreate(['name' => 'Accountant']);
         $accountant->roles()->attach($role->id);
         $this->actingAs($accountant);
 

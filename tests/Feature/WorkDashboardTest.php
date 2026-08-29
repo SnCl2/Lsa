@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\UserRole;
+use App\Models\Role;
 use App\Models\Work;
 use App\Models\Inspection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,7 +24,7 @@ class WorkDashboardTest extends TestCase
     {
         // Surveyor role does not have access
         $surveyor = User::factory()->create();
-        $role = UserRole::firstOrCreate(['name' => 'Surveyor']);
+        $role = Role::firstOrCreate(['name' => 'Surveyor']);
         $surveyor->roles()->attach($role->id);
 
         $response = $this->actingAs($surveyor)->get(route('works.dashboard'));
@@ -35,7 +35,7 @@ class WorkDashboardTest extends TestCase
     {
         // Super Admin has access
         $admin = User::factory()->create();
-        $role = UserRole::firstOrCreate(['name' => 'Super Admin']);
+        $role = Role::firstOrCreate(['name' => 'Super Admin']);
         $admin->roles()->attach($role->id);
         
         $now = Carbon::now();

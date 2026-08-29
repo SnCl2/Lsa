@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\UserRole;
+use App\Models\Role;
 use App\Models\Work;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +19,7 @@ class IncompleteWorksTest extends TestCase
         
         // Create admin user
         $admin = User::factory()->create();
-        $role = UserRole::firstOrCreate(['name' => 'Super Admin']);
+        $role = Role::firstOrCreate(['name' => 'Super Admin']);
         $admin->roles()->attach($role->id);
         $this->actingAs($admin);
     }
