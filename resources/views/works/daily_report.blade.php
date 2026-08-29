@@ -52,68 +52,60 @@
     <div class="row mb-4">
         <!-- Created Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-primary">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-primary card-primary">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Created</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $createdCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-folder-plus fa-2x text-primary-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-primary text-uppercase mb-1" style="letter-spacing: 0.8px;">Created</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $createdCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-folder-plus card-icon text-contrast-primary"></i>
                 </div>
             </div>
         </div>
 
         <!-- Surveyed Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-info">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-info card-info">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Surveyed</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $surveyedCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-map-marked-alt fa-2x text-info-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-info text-uppercase mb-1" style="letter-spacing: 0.8px;">Surveyed</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $surveyedCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-map-marked-alt card-icon text-contrast-info"></i>
                 </div>
             </div>
         </div>
 
         <!-- Reported Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-warning">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-warning card-warning">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Reported</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $reportedCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-invoice fa-2x text-warning-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-warning text-uppercase mb-1" style="letter-spacing: 0.8px;">Reported</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $reportedCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-file-invoice card-icon text-contrast-warning"></i>
                 </div>
             </div>
         </div>
 
         <!-- Checked Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-success">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-success card-success">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Checked</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $checkedCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-check fa-2x text-success-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-success text-uppercase mb-1" style="letter-spacing: 0.8px;">Checked</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $checkedCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-user-check card-icon text-contrast-success"></i>
                 </div>
             </div>
         </div>
@@ -122,68 +114,60 @@
     <div class="row mb-4">
         <!-- Delivered Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-dark">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-dark card-dark">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">Delivered</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $deliveredCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-shipping-fast fa-2x text-dark-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-dark text-uppercase mb-1" style="letter-spacing: 0.8px;">Delivered</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $deliveredCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-shipping-fast card-icon text-contrast-dark"></i>
                 </div>
             </div>
         </div>
 
         <!-- Canceled Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-danger">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-danger card-danger">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Canceled</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $canceledCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-ban fa-2x text-danger-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-danger text-uppercase mb-1" style="letter-spacing: 0.8px;">Canceled</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $canceledCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-ban card-icon text-contrast-danger"></i>
                 </div>
             </div>
         </div>
 
         <!-- Positive Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-teal">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-teal card-teal">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-teal text-uppercase mb-1">Positive Result</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $positiveCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-teal-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-teal text-uppercase mb-1" style="letter-spacing: 0.8px;">Positive Result</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $positiveCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-check-circle card-icon text-contrast-teal"></i>
                 </div>
             </div>
         </div>
 
         <!-- Negative Card -->
         <div class="col-6 col-lg-3 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg h-100 py-2 border-left-orange">
+            <div class="card border-0 shadow-sm rounded-lg h-100 py-3 border-left-orange card-orange">
                 <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-orange text-uppercase mb-1">Negative Result</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $negativeCount }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-times-circle fa-2x text-orange-light"></i>
+                    <div class="d-flex align-items-center justify-content-between pr-4">
+                        <div>
+                            <div class="text-xs font-weight-bold text-contrast-orange text-uppercase mb-1" style="letter-spacing: 0.8px;">Negative Result</div>
+                            <div class="h3 mb-0 font-weight-bold text-gray-900">{{ $negativeCount }}</div>
                         </div>
                     </div>
+                    <i class="fas fa-times-circle card-icon text-contrast-orange"></i>
                 </div>
             </div>
         </div>
@@ -368,27 +352,64 @@
 </div>
 
 <style>
-    /* Styling tokens */
-    .border-left-primary { border-left: 4px solid #3f51b5 !important; }
-    .border-left-info { border-left: 4px solid #36b9cc !important; }
-    .border-left-warning { border-left: 4px solid #f6c23e !important; }
-    .border-left-success { border-left: 4px solid #1cc88a !important; }
-    .border-left-dark { border-left: 4px solid #5a5c69 !important; }
-    .border-left-danger { border-left: 4px solid #e74a3b !important; }
-    .border-left-teal { border-left: 4px solid #20c997 !important; }
-    .border-left-orange { border-left: 4px solid #fd7e14 !important; }
+    /* Card Styling & Hover Animations */
+    .card {
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    }
 
-    .text-teal { color: #20c997 !important; }
-    .text-orange { color: #fd7e14 !important; }
+    /* Left Accent Borders (High Contrast) */
+    .border-left-primary { border-left: 5px solid #3f51b5 !important; }
+    .border-left-info { border-left: 5px solid #0d9488 !important; }
+    .border-left-warning { border-left: 5px solid #b45309 !important; }
+    .border-left-success { border-left: 5px solid #047857 !important; }
+    .border-left-dark { border-left: 5px solid #1f2937 !important; }
+    .border-left-danger { border-left: 5px solid #be123c !important; }
+    .border-left-teal { border-left: 5px solid #0f766e !important; }
+    .border-left-orange { border-left: 5px solid #c2410c !important; }
 
-    .text-primary-light { color: #d9e2ec; }
-    .text-info-light { color: #e0f2f1; }
-    .text-warning-light { color: #fffde7; }
-    .text-success-light { color: #e8f5e9; }
-    .text-dark-light { color: #eceff1; }
-    .text-danger-light { color: #ffebee; }
-    .text-teal-light { color: #e0f2f1; }
-    .text-orange-light { color: #fff3e0; }
+    /* Card Background Tints */
+    .card-primary { background-color: rgba(63, 81, 181, 0.03) !important; }
+    .card-info { background-color: rgba(13, 148, 136, 0.03) !important; }
+    .card-warning { background-color: rgba(180, 83, 9, 0.03) !important; }
+    .card-success { background-color: rgba(4, 120, 87, 0.03) !important; }
+    .card-dark { background-color: rgba(31, 41, 55, 0.03) !important; }
+    .card-danger { background-color: rgba(190, 18, 60, 0.03) !important; }
+    .card-teal { background-color: rgba(15, 118, 110, 0.03) !important; }
+    .card-orange { background-color: rgba(194, 65, 12, 0.03) !important; }
+
+    /* High Contrast Text Labels */
+    .text-contrast-primary { color: #1e3a8a !important; }
+    .text-contrast-info { color: #0f766e !important; }
+    .text-contrast-warning { color: #7c2d12 !important; }
+    .text-contrast-success { color: #064e3b !important; }
+    .text-contrast-dark { color: #111827 !important; }
+    .text-contrast-danger { color: #881337 !important; }
+    .text-contrast-teal { color: #115e59 !important; }
+    .text-contrast-orange { color: #7c2d12 !important; }
+
+    /* Absolute Watermark Card Icons */
+    .card-icon {
+        position: absolute;
+        right: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.25rem;
+        opacity: 0.16;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
+    
+    .card:hover .card-icon {
+        transform: translateY(-50%) scale(1.2);
+        opacity: 0.28;
+    }
 
     .badge-primary-light {
         background-color: #e8eaf6;
