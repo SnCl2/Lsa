@@ -67,6 +67,22 @@
         </div>
         @endif
 
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('works.hold') }}" class="text-decoration-none module-link">
+                <div class="premium-card h-100 border-danger-left">
+                    <div class="card-icon bg-danger-soft text-danger">
+                        <i class="fas fa-pause-circle"></i>
+                    </div>
+                    <h5 class="card-title font-weight-bolder text-dark mb-2">
+                        {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'All Hold Works' : 'My Hold Works' }}
+                    </h5>
+                    <p class="card-text text-muted small mb-0">
+                        {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'View all works currently on hold.' : 'View all hold works assigned to you.' }}
+                    </p>
+                </div>
+            </a>
+        </div>
+
         @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin') || auth()->user()->roles->contains('name', 'Reporter'))
         <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
             <a href="{{ route('works.reporter') }}" class="text-decoration-none module-link">

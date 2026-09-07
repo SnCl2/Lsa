@@ -2,20 +2,42 @@
 
 @section('content')
 <div class="container-fluid mt-5" style="padding-left: 10px; padding-right: 10px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Work Management</h1>
-        <a href="{{ route('works.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create New Work
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap" style="gap: 10px;">
+        <h1 class="mb-0">{{ $pageTitle ?? 'Work Management' }}</h1>
+        <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
+            @php
+                $user = auth()->user();
+                $isSuperOrKkda = $user->roles->contains('name', 'Super Admin') || $user->roles->contains('name', 'KKDA Admin');
+                $holdButtonLabel = $isSuperOrKkda ? 'View All Hold Works' : 'View My Assigned Hold Works';
+                $holdBadgeCount = isset($holdCount) ? $holdCount : (
+                    $isSuperOrKkda 
+                        ? \App\Models\Work::where('is_hold', 1)->count()
+                        : \App\Models\Work::where('is_hold', 1)->where(function($q) use ($user) {
+                            if ($user->roles->contains('name', 'Bank Branch')) {
+                                $q->where('bank_branch', $user->id);
+                            } else {
+                                $q->where('created_by', $user->id)
+                                  ->orWhere('assignee_surveyor', $user->id)
+                                  ->orWhere('assignee_reporter', $user->id)
+                                  ->orWhere('assignee_checker', $user->id)
+                                  ->orWhere('assignee_delivery', $user->id);
+                            }
+                        })->count()
+                );
+            @endphp
+            <a href="{{ route('works.hold') }}" class="btn {{ request()->routeIs('works.hold') ? 'btn-danger' : 'btn-outline-danger' }}" title="{{ $isSuperOrKkda ? 'View all works on hold in the system' : 'View all works on hold where you are assigned' }}">
+                <i class="fas fa-pause-circle"></i> {{ $holdButtonLabel }}
+                <span class="badge badge-light ml-1">{{ $holdBadgeCount }}</span>
+            </a>
+            @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin') || auth()->user()->roles->contains('name', 'In-Charge'))
+            <a href="{{ route('works.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Work
+            </a>
+            @endif
+        </div>
     </div>
     
-    @if(auth()->user()->roles->contains('name', 'Super Admin') || 
-        auth()->user()->roles->contains('name', 'In-Charge') || 
-        auth()->user()->roles->contains('name', 'Reporter') || 
-        auth()->user()->roles->contains('name', 'Surveyor') || 
-        auth()->user()->roles->contains('name', 'Checker') || 
-        auth()->user()->roles->contains('name', 'Delivery Person') || 
-        auth()->user()->roles->contains('name', 'KKDA Admin'))
+    @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
     <!-- Status Navigation Buttons -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body p-3">
@@ -23,9 +45,11 @@
                 @php
                     $statusCounts = isset($statusCounts) ? $statusCounts : [];
                     $resultCounts = isset($resultCounts) ? $resultCounts : [];
+                    $holdCount = $holdBadgeCount;
                     $currentStatus = request('status');
                     $currentResult = request('result');
-                    $currentRouteName = request()->route()->getName();
+                    $currentIsHold = request('is_hold');
+                    $currentRouteName = request()->route()?->getName() ?? 'works.index';
                     // Determine the correct route for filtering based on current route
                     $statusRoute = 'works.index'; // default
                     if ($currentRouteName === 'works.reporter') {
@@ -40,10 +64,12 @@
                         $statusRoute = 'works.bankBranch';
                     } elseif ($currentRouteName === 'works.myWorks') {
                         $statusRoute = 'works.myWorks';
+                    } elseif ($currentRouteName === 'works.hold') {
+                        $statusRoute = 'works.hold';
                     }
                 @endphp
                 <a href="{{ route($statusRoute) }}" 
-                   class="btn btn-sm {{ !$currentStatus && !$currentResult ? 'btn-primary' : 'btn-outline-secondary' }}">
+                   class="btn btn-sm {{ !$currentStatus && !$currentResult && $currentIsHold === null && !request()->routeIs('works.hold') ? 'btn-primary' : 'btn-outline-secondary' }}">
                     <i class="fas fa-list"></i> All Works
                     <span class="badge badge-light ml-2">{{ $works->total() }}</span>
                 </a>
@@ -82,10 +108,11 @@
                     <i class="fas fa-check-double"></i> Completed
                     <span class="badge badge-light ml-2">{{ $statusCounts['Completed'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Hold']) }}" 
-                   class="btn btn-sm {{ $currentStatus == 'Hold' ? 'btn-danger' : 'btn-outline-danger' }}">
-                    <i class="fas fa-pause"></i> Hold
-                    <span class="badge badge-light ml-2">{{ $statusCounts['Hold'] ?? 0 }}</span>
+                <a href="{{ route('works.hold') }}" 
+                   class="btn btn-sm {{ request()->routeIs('works.hold') || $currentIsHold === '1' ? 'btn-danger' : 'btn-outline-danger' }}"
+                   title="{{ $isSuperOrKkda ? 'View all works on hold' : 'View all hold works where you are assigned' }}">
+                    <i class="fas fa-pause"></i> {{ $isSuperOrKkda ? 'All Hold Works' : 'My Hold Works' }}
+                    <span class="badge badge-light ml-2">{{ $holdBadgeCount }}</span>
                 </a>
                 <a href="{{ route($statusRoute, ['status' => 'Canceled']) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Canceled' ? 'btn-dark' : 'btn-outline-dark' }}">
@@ -115,13 +142,7 @@
     </div>
     @endif
     
-    @if(auth()->user()->roles->contains('name', 'Super Admin') || 
-    auth()->user()->roles->contains('name', 'In-Charge') || 
-    auth()->user()->roles->contains('name', 'Reporter') || 
-    auth()->user()->roles->contains('name', 'Surveyor') || 
-    auth()->user()->roles->contains('name', 'Checker') || 
-    auth()->user()->roles->contains('name', 'Delivery Person') || 
-    auth()->user()->roles->contains('name', 'KKDA Admin'))
+    @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
     <!-- Filters Card -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-light">
@@ -131,7 +152,7 @@
         </div>
         <div class="card-body">
             @php
-                $currentRouteName = request()->route()->getName();
+                $currentRouteName = request()->route()?->getName() ?? 'works.index';
                 // Determine the correct route for filtering based on current route
                 $filterRoute = 'works.index'; // default
                 if ($currentRouteName === 'works.reporter') {
@@ -146,6 +167,8 @@
                     $filterRoute = 'works.bankBranch';
                 } elseif ($currentRouteName === 'works.myWorks') {
                     $filterRoute = 'works.myWorks';
+                } elseif ($currentRouteName === 'works.hold') {
+                    $filterRoute = 'works.hold';
                 }
             @endphp
             <form method="GET" action="{{ route($filterRoute) }}" class="filter-form">
@@ -272,9 +295,20 @@
                             <option value="">All Results</option>
                             <option value="Positive" {{ request('result') == 'Positive' ? 'selected' : '' }}>✅ Positive</option>
                             <option value="Negative" {{ request('result') == 'Negative' ? 'selected' : '' }}>❌ Negative</option>
-                            <option value="Hold" {{ request('result') == 'Hold' ? 'selected' : '' }}>⏸️ Hold</option>
                             <option value="Canceled" {{ request('result') == 'Canceled' ? 'selected' : '' }}>🚫 Canceled</option>
                             <option value="Return" {{ request('result') == 'Return' ? 'selected' : '' }}>↩️ Return</option>
+                        </select>
+                    </div>
+
+                    <!-- Hold Status Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-pause-circle text-danger"></i> Hold Status
+                        </label>
+                        <select class="form-control" name="is_hold">
+                            <option value="">All (Hold & Active)</option>
+                            <option value="1" {{ request('is_hold') === '1' ? 'selected' : '' }}>⏸️ On Hold</option>
+                            <option value="0" {{ request('is_hold') === '0' ? 'selected' : '' }}>▶️ Not on Hold</option>
                         </select>
                     </div>
 
@@ -495,7 +529,11 @@
                                 @endif
                             @else
                                 {{ $work->status }}
-                                
+                            @endif
+                            @if($work->is_hold)
+                                <div class="mt-1">
+                                    <span class="badge badge-danger" title="Work is currently on Hold"><i class="fas fa-pause"></i> ON HOLD</span>
+                                </div>
                             @endif
                             @if($work->valuer)
                                 <br><strong>Valuer:</strong> {{ strtoupper($work->valuer) }}
@@ -503,18 +541,13 @@
                             @if($work->result)
                                 <br><strong>Result:</strong> {{ $work->result }}
                             @endif
-                            @if(auth()->user()->roles->contains('name', 'KKDA Admin') ||
-                                auth()->user()->roles->contains('name', 'In-Charge') ||
-                                auth()->user()->roles->contains('name', 'Surveyor') ||
-                                auth()->user()->roles->contains('name', 'Reporter') ||
-                                auth()->user()->roles->contains('name', 'Checker') ||
-                                auth()->user()->roles->contains('name', 'Super Admin'))
+                            @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
                                 <div class="mt-2 btn-group" role="group">
                                     <button type="button" class="btn btn-sm {{ $work->result === 'Negative' ? 'btn-danger' : 'btn-outline-danger' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Negative" title="Toggle Negative">
                                         Negative
                                     </button>
-                                    <button type="button" class="btn btn-sm {{ $work->result === 'Hold' ? 'btn-warning' : 'btn-outline-warning' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Hold" title="Toggle Hold">
-                                        Hold
+                                    <button type="button" class="btn btn-sm {{ $work->is_hold ? 'btn-danger' : 'btn-outline-secondary' }} toggle-hold-btn" data-work-id="{{ $work->id }}" data-is-hold="{{ $work->is_hold ? '1' : '0' }}" title="{{ $work->is_hold ? 'Release from Hold' : 'Place on Hold' }}">
+                                        <i class="fas {{ $work->is_hold ? 'fa-play' : 'fa-pause' }}"></i> {{ $work->is_hold ? 'On Hold' : 'Hold' }}
                                     </button>
                                 </div>
                             @endif
@@ -528,7 +561,7 @@
                             @endif
                         
                             {{-- Upload Dropdown --}}
-                            @if(auth()->user()->roles->contains('name', 'Reporter') || auth()->user()->roles->contains('name', 'Checker')|| auth()->user()->roles->contains('name', 'KKDA Admin'))
+                            @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
                                 <div class="dropdown mt-2">
                                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="uploadDropdown{{ $work->id }}" data-bs-toggle="dropdown" aria-expanded="false">
                                         Upload Final Report
@@ -1009,6 +1042,51 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while updating the result');
+            });
+        });
+    });
+
+    // Handle Toggle Hold
+    document.querySelectorAll('.toggle-hold-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const workId = this.getAttribute('data-work-id');
+            const isCurrentlyHold = this.getAttribute('data-is-hold') === '1';
+            const willBeHold = !isCurrentlyHold;
+            
+            let remarks = null;
+            if (willBeHold) {
+                remarks = prompt('Please enter remarks for placing this work on Hold (optional):');
+                if (remarks === null) {
+                    return; // User cancelled
+                }
+            } else {
+                if (!confirm('Are you sure you want to release this work from Hold?')) {
+                    return;
+                }
+            }
+    
+            fetch(`/works/${workId}/toggle-hold`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    is_hold: willBeHold ? 1 : 0,
+                    remarks: remarks
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating Hold status');
             });
         });
     });

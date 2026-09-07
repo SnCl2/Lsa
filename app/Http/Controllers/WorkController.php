@@ -81,6 +81,11 @@ class WorkController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+
+        // Filter by Hold Status
+        if ($request->filled('is_hold')) {
+            $query->where('is_hold', $request->is_hold == '1' ? 1 : 0);
+        }
         
         // Filter by Bank Branch
         if ($request->filled('bank_branch')) {
@@ -182,8 +187,9 @@ class WorkController extends Controller
 
         // Count works pending printing
         $pendingPrintCount = Work::whereNotNull('checking_ended_at')->where('is_printed', 0)->count();
+        $holdCount = Work::where('is_hold', 1)->count();
     
-        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount'));
+        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount'));
     }
 
     public function export(Request $request)
@@ -209,7 +215,7 @@ class WorkController extends Controller
             // CSV Header based on provided sample and available fields
             fputcsv($file, [
                 'SL. NO.', 'DATE', 'REF NO.', 'CUSTOMER NAME', 'CONT. NUMBER', 'BANK', 'BRANCH',
-                'DONE BY', 'CHECK BY', 'INSPECTION BY', 'INCHARGE', 'STATUS', 'RESULT', 'ASSIGNMENT DATE',
+                'DONE BY', 'CHECK BY', 'INSPECTION BY', 'INCHARGE', 'STATUS', 'ON HOLD', 'RESULT', 'ASSIGNMENT DATE',
                 'PRINT DATE', 'RSD', 'REGION', 'SUB-BRANCH', 'SOURCER', 'HLST/SSL', 'INVOICE NO.', 'INVOICE DATE',
                 'PRINCIPLE AMOUNT', 'GST', 'INVOICE AMOUNT', 'BILL STATUS', 'REMARKS'
             ]);
@@ -229,6 +235,7 @@ class WorkController extends Controller
                     optional($work->surveyor)->name,     // INSPECTION BY
                     optional($work->creator)->name,      // INCHARGE
                     $work->status,
+                    $work->is_hold ? 'Yes' : 'No',
                     $work->result,
                     $work->assignment_date ? (is_string($work->assignment_date) ? $work->assignment_date : $work->assignment_date->format('n/j/Y')) : '',
                     $work->report_submit_date ? (is_string($work->report_submit_date) ? $work->report_submit_date : $work->report_submit_date->format('n/j/Y')) : '',
@@ -535,9 +542,10 @@ public function worksForBankBranch(Request $request)
                 'valuer' => ['nullable', Rule::in(['a', 'b', 'c', 'd'])],
                 // Hold/Canceled moved to result; keep status limited
                 'status' => [ Rule::in(['New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed'])],
+                'is_hold' => 'nullable|boolean',
                 'payment_status' => [ Rule::in(['Payment Due', 'Paid'])],
                 'delivery_status' => [ Rule::in(['Delivery Due', 'Delivery Done'])],
-                'result' => ['nullable', Rule::in(['Positive', 'Negative', 'Hold', 'Canceled', 'Return'])],
+                'result' => ['nullable', Rule::in(['Positive', 'Negative', 'Canceled', 'Return'])],
                 'remarks' => 'nullable|string',
                 'assignee_surveyor' => 'nullable|integer|exists:users,id',
                 'assignee_reporter' => 'nullable|integer|exists:users,id',
@@ -554,6 +562,7 @@ public function worksForBankBranch(Request $request)
             }
 
             $validatedData['created_by'] = Auth::id();
+            $validatedData['is_hold'] = $request->boolean('is_hold');
 
             $work = Work::create($validatedData);
             
@@ -636,9 +645,10 @@ public function worksForBankBranch(Request $request)
                 'work_type' => ['required', Rule::in(['Valuation', 'Fair Rent Valuation', 'Estimate', 'Completion Certificate', 'Vetting'])],
                 'valuer' => ['nullable', Rule::in(['a', 'b', 'c', 'd'])],
                 'status' => ['required', Rule::in(['New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed'])],
+                'is_hold' => 'nullable|boolean',
                 'payment_status' => ['required', Rule::in(['Payment Due', 'Paid'])],
                 'delivery_status' => ['required', Rule::in(['Delivery Due', 'Delivery Done'])],
-                'result' => ['nullable', Rule::in(['Positive', 'Negative', 'Hold', 'Canceled', 'Return'])],
+                'result' => ['nullable', Rule::in(['Positive', 'Negative', 'Canceled', 'Return'])],
                 'remarks' => 'nullable|string',
                 'report_submit_date' => 'nullable|date',
                 'assignee_surveyor' => 'nullable|integer|exists:users,id',
@@ -652,6 +662,8 @@ public function worksForBankBranch(Request $request)
     
             // Find Work Entry
             $work = Work::findOrFail($id);
+
+            $validatedData['is_hold'] = $request->boolean('is_hold');
 
             if (($validatedData['status'] ?? null) === 'Completed') {
                 // $guardMessage = $this->completionGuardMessage($work);
@@ -812,6 +824,11 @@ public function worksForBankBranch(Request $request)
     public function documentUpload(Request $request, $id)
     {
         try {
+            $user = auth()->user();
+            if ($user->roles->contains('name', 'Bank Branch') && $user->roles->count() === 1) {
+                return back()->withInput()->withErrors(['error' => 'You do not have permission to upload reports.']);
+            }
+
             // Validate the uploaded files
             $validatedData = $request->validate([
                 'final_report_pdf' => 'nullable|file|mimes:pdf|max:51200',   // 5MB
@@ -1250,10 +1267,8 @@ public function worksForBankBranch(Request $request)
     public function toggleResult(Request $request, Work $work)
     {
         try {
-            $userRoles = auth()->user()->roles->pluck('name')->toArray();
-            $allowedRoles = ['Super Admin', 'KKDA Admin', 'In-Charge', 'Surveyor', 'Reporter', 'Checker'];
-            
-            if (empty(array_intersect($allowedRoles, $userRoles))) {
+            $user = auth()->user();
+            if ($user->roles->contains('name', 'Bank Branch') && $user->roles->count() === 1) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to update the result.'
@@ -1285,6 +1300,140 @@ public function worksForBankBranch(Request $request)
                 'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function toggleHold(Request $request, Work $work)
+    {
+        try {
+            $user = auth()->user();
+            if ($user->roles->contains('name', 'Bank Branch') && $user->roles->count() === 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to update hold status.'
+                ], 403);
+            }
+            
+            $validatedData = $request->validate([
+                'is_hold' => 'nullable|boolean',
+                'remarks' => 'nullable|string'
+            ]);
+
+            $newHold = $request->has('is_hold') ? (bool)$validatedData['is_hold'] : !$work->is_hold;
+            
+            $work->is_hold = $newHold;
+            if ($request->filled('remarks')) {
+                $work->remarks = $validatedData['remarks'];
+            }
+            
+            $work->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => $work->is_hold ? 'Work placed on Hold successfully' : 'Work released from Hold successfully',
+                'is_hold' => (bool)$work->is_hold
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function holdWorks(Request $request)
+    {
+        $user = auth()->user();
+        $userId = $user->id;
+        $isSuperOrKkda = $user->roles->contains('name', 'Super Admin') || $user->roles->contains('name', 'KKDA Admin');
+
+        $query = Work::with([
+            'creator', 
+            'surveyor', 
+            'reporter', 
+            'checker', 
+            'deliveryPerson', 
+            'bankBranch', 
+            'relatives', 
+            'inspection', 
+            'report'
+        ])->where('is_hold', 1)->orderBy('created_at', 'desc');
+
+        // KKDA Admin and Super Admin can see all works there.
+        // Other roles can see hold works where they are assigned.
+        if (!$isSuperOrKkda) {
+            if ($user->roles->contains('name', 'Bank Branch')) {
+                $query->where('bank_branch', $userId);
+            } else {
+                $query->where(function($q) use ($userId) {
+                    $q->where('created_by', $userId)
+                      ->orWhere('assignee_surveyor', $userId)
+                      ->orWhere('assignee_reporter', $userId)
+                      ->orWhere('assignee_checker', $userId)
+                      ->orWhere('assignee_delivery', $userId);
+                });
+            }
+        }
+
+        // Apply filters
+        $query = $this->applyFilters($query, $request);
+
+        $works = $query->paginate(10)->withQueryString();
+
+        $usersByRole = $this->getUsersByRole();
+        $statusCounts = $this->getStatusCounts();
+
+        // Get result counts for navigation buttons
+        $resultCountsQuery = Work::selectRaw('result, COUNT(*) as count')
+            ->where('is_hold', 1)
+            ->whereNotNull('result');
+        if (!$isSuperOrKkda) {
+            if ($user->roles->contains('name', 'Bank Branch')) {
+                $resultCountsQuery->where('bank_branch', $userId);
+            } else {
+                $resultCountsQuery->where(function($q) use ($userId) {
+                    $q->where('created_by', $userId)
+                      ->orWhere('assignee_surveyor', $userId)
+                      ->orWhere('assignee_reporter', $userId)
+                      ->orWhere('assignee_checker', $userId)
+                      ->orWhere('assignee_delivery', $userId);
+                });
+            }
+        }
+        $resultCounts = $resultCountsQuery->groupBy('result')->pluck('count', 'result')->toArray();
+
+        $pendingPrintQuery = Work::where('is_hold', 1)->whereNotNull('checking_ended_at')->where('is_printed', 0);
+        if (!$isSuperOrKkda) {
+            if ($user->roles->contains('name', 'Bank Branch')) {
+                $pendingPrintQuery->where('bank_branch', $userId);
+            } else {
+                $pendingPrintQuery->where(function($q) use ($userId) {
+                    $q->where('created_by', $userId)
+                      ->orWhere('assignee_surveyor', $userId)
+                      ->orWhere('assignee_reporter', $userId)
+                      ->orWhere('assignee_checker', $userId)
+                      ->orWhere('assignee_delivery', $userId);
+                });
+            }
+        }
+        $pendingPrintCount = $pendingPrintQuery->count();
+
+        $holdCount = $isSuperOrKkda
+            ? Work::where('is_hold', 1)->count()
+            : Work::where('is_hold', 1)->where(function($q) use ($userId, $user) {
+                if ($user->roles->contains('name', 'Bank Branch')) {
+                    $q->where('bank_branch', $userId);
+                } else {
+                    $q->where('created_by', $userId)
+                      ->orWhere('assignee_surveyor', $userId)
+                      ->orWhere('assignee_reporter', $userId)
+                      ->orWhere('assignee_checker', $userId)
+                      ->orWhere('assignee_delivery', $userId);
+                }
+            })->count();
+
+        $pageTitle = $isSuperOrKkda ? 'All Hold Works' : 'My Assigned Hold Works';
+
+        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'pageTitle'));
     }
 
     private function autoAssignRole($work, $roleName, $status, $assigneeColumn)

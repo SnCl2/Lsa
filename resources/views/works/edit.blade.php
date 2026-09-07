@@ -150,19 +150,18 @@
             </div>
         </div>
         <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
                 <label for="result">Result</label>
                 <select class="form-control" id="result" name="result">
                     <option value="">Select Result</option>
                     <option value="Positive" {{ $work->result == 'Positive' ? 'selected' : '' }}>Positive</option>
                     <option value="Negative" {{ $work->result == 'Negative' ? 'selected' : '' }}>Negative</option>
-                    <option value="Hold" {{ $work->result == 'Hold' ? 'selected' : '' }}>Hold</option>
                     <option value="Canceled" {{ $work->result == 'Canceled' ? 'selected' : '' }}>Canceled</option>
                     <option value="Return" {{ $work->result == 'Return' ? 'selected' : '' }}>Return</option>
                 </select>
             </div>
             @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="status">Status</label>
                 <select class="form-control" id="status" name="status" required>
                     <option value="New File" {{ $work->status == 'New File' ? 'selected' : '' }}>New File</option>
@@ -175,6 +174,17 @@
                 <small class="form-text text-muted">To set Completed, first mark Printed = Yes from the works list.</small>
             </div>
             @endif
+            <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
+                <label for="is_hold">Hold Status</label>
+                <div class="custom-control custom-switch mt-2">
+                    <input type="hidden" name="is_hold" value="0">
+                    <input type="checkbox" class="custom-control-input" id="is_hold" name="is_hold" value="1" {{ old('is_hold', $work->is_hold) ? 'checked' : '' }}>
+                    <label class="custom-control-label text-danger font-weight-bold" for="is_hold">
+                        <i class="fas fa-pause-circle"></i> Put this work On Hold
+                    </label>
+                </div>
+                <small class="form-text text-muted">Hold can be toggled without changing current workflow stage.</small>
+            </div>
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">

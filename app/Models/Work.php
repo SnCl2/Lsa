@@ -57,6 +57,7 @@ class Work extends Model
 
         // Status & Payment
         'status',
+        'is_hold',
         'work_type',
         'valuer',
         'payment_status',
@@ -93,6 +94,7 @@ class Work extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'is_printed' => 'boolean',
+        'is_hold' => 'boolean',
         'is_vdn' => 'boolean',
         'is_billing_done' => 'boolean',
         'billing_done_at' => 'datetime',

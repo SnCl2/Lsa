@@ -74,10 +74,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('works/{work}/end-reporting', [WorkController::class, 'endReporting'])->name('works.endReporting');
     Route::post('works/{work}/start-checking', [WorkController::class, 'startChecking'])->name('works.startChecking');
     Route::post('works/{work}/end-checking', [WorkController::class, 'endChecking'])->name('works.endChecking');
-    // Toggle routes - accessible to all roles except Bank Branch (permission checked in controller)
+    // Toggle and action routes - accessible to all roles except Bank Branch (permission checked in controller)
+    Route::get('works/hold', [WorkController::class, 'holdWorks'])->name('works.hold');
     Route::post('works/{work}/toggle-printed', [WorkController::class, 'togglePrinted'])->name('works.togglePrinted');
     Route::post('works/{work}/toggle-vdn', [WorkController::class, 'toggleVdn'])->name('works.toggleVdn');
     Route::post('works/{work}/toggle-result', [WorkController::class, 'toggleResult'])->name('works.toggleResult');
+    Route::post('works/{work}/toggle-hold', [WorkController::class, 'toggleHold'])->name('works.toggleHold');
+    Route::post('works/{work}/upload-documents', [WorkController::class, 'documentUpload'])->name('works.uploadDocuments');
     
     // Debug route for testing password reset
     Route::get('debug-password-reset/{user}', function($user) {
@@ -96,7 +99,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('works', [WorkController::class, 'store'])->name('works.store');
         Route::get('works/{work}/edit', [WorkController::class, 'edit'])->name('works.edit');
         Route::put('works/{work}', [WorkController::class, 'update'])->name('works.update');
-        Route::post('works/{work}/upload-documents', [WorkController::class, 'documentUpload'])->name('works.uploadDocuments');
         Route::delete('works/{work}', [WorkController::class, 'destroy'])->name('works.destroy');
     });
 });

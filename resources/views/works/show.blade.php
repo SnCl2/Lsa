@@ -106,7 +106,12 @@
             <div class="row">
                 <div class="col-md-6">
                     <label class="form-label">Status:</label>
-                    <p class="form-control-plaintext"><span class="badge bg-info">{{ $work->status ?? 'Pending' }}</span></p>
+                    <p class="form-control-plaintext">
+                        <span class="badge bg-info">{{ $work->status ?? 'Pending' }}</span>
+                        @if($work->is_hold)
+                            <span class="badge bg-danger ml-2"><i class="fas fa-pause"></i> On Hold</span>
+                        @endif
+                    </p>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Work Type:</label>
