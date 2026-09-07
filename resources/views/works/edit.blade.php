@@ -34,7 +34,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="number_of_applicants">Contact Number</label>
-                <input type="text" class="form-control" id="number_of_applicants" name="number_of_applicants" value="{{ $work->number_of_applicants }}" required>
+                <input type="number" class="form-control" id="number_of_applicants" name="number_of_applicants" value="{{ $work->number_of_applicants }}" required>
             </div>
         </div>
         <div class="form-row">
@@ -58,8 +58,29 @@
                 <input type="text" class="form-control" id="source" name="source" value="{{ $work->source }}">
             </div>
             <div class="form-group col-md-6">
-                <label for="address_line_1">Address Line 1</label>
-                <input type="text" class="form-control" id="address_line_1" name="address_line_1" value="{{ $work->address_line_1 }}">
+                <label for="address_line_1">HOLDING NO. / PREMISES NO.</label>
+                <div class="d-flex">
+                    <!-- Dropdown -->
+                    @php
+                        $selectedPrefix = '';
+                        if (str_starts_with($work->address_line_1 ?? '', 'Holding No')) {
+                            $selectedPrefix = 'Holding No';
+                        } elseif (str_starts_with($work->address_line_1 ?? '', 'Premises No')) {
+                            $selectedPrefix = 'Premises No';
+                        } elseif (str_starts_with($work->address_line_1 ?? '', 'Khatian No')) {
+                            $selectedPrefix = 'Khatian No';
+                        }
+                    @endphp
+                    <select id="prefixSelect" class="form-control mr-2" style="max-width: 200px;">
+                        <option value="">-- Select --</option>
+                        <option value="Holding No" {{ $selectedPrefix == 'Holding No' ? 'selected' : '' }}>Holding No</option>
+                        <option value="Premises No" {{ $selectedPrefix == 'Premises No' ? 'selected' : '' }}>Premises No</option>
+                        <option value="Khatian No" {{ $selectedPrefix == 'Khatian No' ? 'selected' : '' }}>Khatian No</option>
+                    </select>
+            
+                    <!-- Input -->
+                    <input type="text" class="form-control" id="address_line_1" name="address_line_1" value="{{ $work->address_line_1 }}">
+                </div>
             </div>
         </div>
         <div class="form-row">
@@ -95,17 +116,55 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="project_name">Project Name</label>
-                <input type="text" class="form-control" id="project_name" name="project_name" value="{{ $work->project_name }}">
+                <input type="text" class="form-control" id="project_name" name="project_name" value="{{ $work->project_name }}" list="project_name_list" autocomplete="off">
+                <datalist id="project_name_list">
+                    @foreach($projectNames as $pn)
+                        <option value="{{ $pn->name }}"></option>
+                    @endforeach
+                </datalist>
             </div>
             <div class="form-group col-md-6">
                 <label for="loan_amount_requested">Loan Amount Requested</label>
-                <input type="text" class="form-control" id="loan_amount_requested" name="loan_amount_requested" value="{{ $work->loan_amount_requested}}">
+                <div class="d-flex">
+                    <!-- Unit dropdown -->
+                    @php
+                        $selectedUnit = '';
+                        if (str_ends_with(trim($work->loan_amount_requested ?? ''), 'Lakh')) {
+                            $selectedUnit = 'Lakh';
+                        } elseif (str_ends_with(trim($work->loan_amount_requested ?? ''), 'Cr')) {
+                            $selectedUnit = 'Cr';
+                        }
+                    @endphp
+                    <select class="form-control mr-2" id="unit" style="max-width: 200px;">
+                        <option value="">Select Unit</option>
+                        <option value="Lakh" {{ $selectedUnit == 'Lakh' ? 'selected' : '' }}>Lakh</option>
+                        <option value="Cr" {{ $selectedUnit == 'Cr' ? 'selected' : '' }}>Cr</option>
+                    </select>
+            
+                    <!-- Loan amount input -->
+                    <input type="text" class="form-control" id="loan_amount_requested" name="loan_amount_requested" value="{{ $work->loan_amount_requested}}">
+                </div>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="loan_type">Loan Type</label>
-                <input type="text" class="form-control" id="loan_type" name="loan_type" value="{{ $work->loan_type }}">
+                <select class="form-control" id="loan_type" name="loan_type">
+                    <option value="">Select Loan Type</option>
+                    @php
+                        $currentLoanType = old('loan_type', $work->loan_type);
+                        $foundCurrent = false;
+                    @endphp
+                    @foreach($loanTypes as $lt)
+                        @if($currentLoanType == $lt->name)
+                            @php $foundCurrent = true; @endphp
+                        @endif
+                        <option value="{{ $lt->name }}" {{ $currentLoanType == $lt->name ? 'selected' : '' }}>{{ $lt->name }}</option>
+                    @endforeach
+                    @if($currentLoanType && !$foundCurrent)
+                        <option value="{{ $currentLoanType }}" selected>{{ $currentLoanType }}</option>
+                    @endif
+                </select>
             </div>
             <div class="form-group col-md-6">
                 <label for="pdf_1">Upload PDF</label>
@@ -306,5 +365,76 @@
                         }
                     });
                 });
+                
+                const unitSelect = document.getElementById("unit");
+                if (unitSelect) {
+                    unitSelect.addEventListener("change", function() {
+                        let unit = this.value;
+                        let inputField = document.getElementById("loan_amount_requested");
+                        if (unit && inputField) {
+                            inputField.value = inputField.value.replace(/ Lakh| Cr/g, '').trim() + " " + unit; 
+                        }
+                    });
+                }
+
+                // Pincode to Post Office lookup functionality
+                const pinCodeInput = document.getElementById("pin_code");
+                if (pinCodeInput) {
+                    pinCodeInput.addEventListener("input", function() {
+                        const pincode = this.value.trim();
+                        const postOfficeField = document.getElementById("post_office");
+                        if (!postOfficeField) return;
+                        
+                        // Clear post office field when pincode is cleared
+                        if (pincode.length === 0) {
+                            postOfficeField.value = '';
+                            return;
+                        }
+                        
+                        // Only make request if pincode is 6 digits
+                        if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+                            postOfficeField.placeholder = "Loading...";
+                            postOfficeField.disabled = true;
+                            
+                            fetch(`/api/pincode/${pincode}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    postOfficeField.disabled = false;
+                                    postOfficeField.placeholder = "";
+                                    
+                                    if (data.success && data.post_offices && data.post_offices.length > 0) {
+                                        postOfficeField.value = data.post_offices[0];
+                                        if (data.post_offices.length > 1) {
+                                            postOfficeField.title = `Multiple post offices found: ${data.post_offices.join(', ')}`;
+                                        }
+                                    } else {
+                                        postOfficeField.value = '';
+                                        postOfficeField.placeholder = "No post office found for this pincode";
+                                    }
+                                })
+                                .catch(error => {
+                                    postOfficeField.disabled = false;
+                                    postOfficeField.placeholder = "";
+                                    postOfficeField.value = '';
+                                    console.error('Error fetching post office:', error);
+                                });
+                        } else if (pincode.length > 0) {
+                            postOfficeField.value = '';
+                            postOfficeField.placeholder = "Enter a valid 6-digit pincode";
+                        }
+                    });
+                }
+
+                const prefixSelect = document.getElementById('prefixSelect');
+                const addressInput = document.getElementById('address_line_1');
+                if (prefixSelect && addressInput) {
+                    prefixSelect.addEventListener('change', function () {
+                        const prefix = this.value;
+                        const currentValue = addressInput.value;
+
+                        const cleanedValue = currentValue.replace(/^(Holding No|Premises No|Khatian No):\s*/i, '');
+                        addressInput.value = prefix ? `${prefix}: ${cleanedValue}` : cleanedValue;
+                    });
+                }
             </script>
             @endsection

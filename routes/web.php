@@ -13,6 +13,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\RoleWiseController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\LoanTypeController;
+use App\Http\Controllers\ProjectNameController;
 // Redirect '/' to Dashboard if logged in
 Route::get('/', function () {
     // echo("expired license key");
@@ -51,6 +53,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('users/{user}/impersonate', [UserController::class, 'impersonate'])->name('users.impersonate');
         Route::post('users/{user}/toggle-login', [UserController::class, 'toggleLogin'])->name('users.toggleLogin');
         Route::resource('roles', UserRoleController::class)->except(['show']);
+        Route::resource('loan-types', LoanTypeController::class)->except(['show']);
+        Route::resource('project-names', ProjectNameController::class)->except(['show']);
         Route::get('works/index', [WorkController::class, 'index'])->name('works.index');
         Route::get('works/incomplete', [WorkController::class, 'incomplete'])->name('works.incomplete');
         Route::get('works/export', [WorkController::class, 'export'])->name('works.export');

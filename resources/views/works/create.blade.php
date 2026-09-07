@@ -105,7 +105,12 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="project_name">Project Name</label>
-                <input type="text" class="form-control" id="project_name" name="project_name" required>
+                <input type="text" class="form-control" id="project_name" name="project_name" list="project_name_list" autocomplete="off" required>
+                <datalist id="project_name_list">
+                    @foreach($projectNames as $pn)
+                        <option value="{{ $pn->name }}"></option>
+                    @endforeach
+                </datalist>
             </div>
             <div class="form-group col-md-6">
                 <label for="loan_amount_requested">Loan Amount Requested</label>
@@ -127,17 +132,9 @@
                 <label for="loan_type">Loan Type</label>
                 <select class="form-control" id="loan_type" name="loan_type" required>
                     <option value="">Select Loan Type</option>
-                    <option value="NHBL">NHBL</option>
-                    <option value="TAKEOVER">TAKEOVER</option>
-                    <option value="TOP-UP">TOP-UP</option>
-                    <option value="HBL">HBL</option>
-                    <option value="COMBO">COMBO</option>
-                    <option value="CONSTRUCTION">CONSTRUCTION</option>
-                    <option value="REALITY">REALITY</option>
-                    <option value="RESALE">RESALE</option>
-                    <option value="NPA">NPA</option>
-                    <option value="ADDITIONAL">ADDITIONAL</option>
-                    <option value="OTHER">OTHER</option>
+                    @foreach($loanTypes as $lt)
+                        <option value="{{ $lt->name }}" {{ old('loan_type') == $lt->name ? 'selected' : '' }}>{{ $lt->name }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="form-group col-md-6">
@@ -280,8 +277,8 @@
                     @endforeach
                 </select>
             </div>
-            @endif
         </div>
+        @endif
         <button type="submit" class="btn btn-primary mt-3">Create Work</button>
     </form>
 </div>

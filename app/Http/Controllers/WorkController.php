@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Work;
 use App\Models\User;
 use App\Models\Relative;
+use App\Models\LoanType;
+use App\Models\ProjectName;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -506,7 +508,10 @@ public function worksForBankBranch(Request $request)
             })->pluck('name', 'id');
         }
 
-        return view('works.create', compact('usersByRole'));
+        $loanTypes = LoanType::orderBy('name')->get();
+        $projectNames = ProjectName::orderBy('name')->get();
+
+        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames'));
     }
 
     public function store(Request $request)
@@ -607,8 +612,11 @@ public function worksForBankBranch(Request $request)
             })->pluck('name', 'id');
         }
 
+        $loanTypes = LoanType::orderBy('name')->get();
+        $projectNames = ProjectName::orderBy('name')->get();
+
         $work = Work::findOrFail($id);
-        return view('works.edit', compact('work', 'usersByRole'));
+        return view('works.edit', compact('work', 'usersByRole', 'loanTypes', 'projectNames'));
     }
 
 

@@ -56,6 +56,12 @@
                         <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
                             {{ __('Manage Roles') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('loan-types.index')" :active="request()->routeIs('loan-types.*')">
+                            {{ __('Loan Types') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
+                            {{ __('Project Names') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('works.index')" :active="request()->routeIs('works.index')">
                             {{ __('Works') }}
                         </x-nav-link>
@@ -137,6 +143,14 @@
 
                 <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
                 {{ __('Manage Roles') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('loan-types.index')" :active="request()->routeIs('loan-types.*')">
+                    {{ __('Loan Types') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
+                    {{ __('Project Names') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('role-wise.index')" :active="request()->routeIs('role-wise.*')">
