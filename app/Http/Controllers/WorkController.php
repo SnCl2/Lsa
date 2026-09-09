@@ -1284,7 +1284,7 @@ public function worksForBankBranch(Request $request)
             }
             
             $validatedData = $request->validate([
-                'result' => 'required|string|in:Hold,Negative,null',
+                'result' => 'required|string|in:Hold,Negative,Positive,null',
                 'remarks' => 'nullable|string'
             ]);
 

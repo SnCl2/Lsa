@@ -446,9 +446,7 @@
                         </td>
                         <td>
                             <strong>ID:</strong> {{ $work->id }}<br>
-                            @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
                             <strong>Custom ID:</strong> {{ $work->custom_id ?? 'N/A' }}
-                            @endif
                         </td>
                         <td>
                             {{ $work->name_of_applicant }}
@@ -543,6 +541,9 @@
                             @endif
                             @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
                                 <div class="mt-2 btn-group" role="group">
+                                    <button type="button" class="btn btn-sm {{ $work->result === 'Positive' ? 'btn-success' : 'btn-outline-success' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Positive" title="Toggle Positive">
+                                        Positive
+                                    </button>
                                     <button type="button" class="btn btn-sm {{ $work->result === 'Negative' ? 'btn-danger' : 'btn-outline-danger' }} toggle-result-btn" data-work-id="{{ $work->id }}" data-current-result="{{ $work->result }}" data-target-result="Negative" title="Toggle Negative">
                                         Negative
                                     </button>
@@ -1010,13 +1011,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentResult === targetResult) {
                 newResult = 'null';
             } else {
-                remarks = prompt(`Please enter remarks for marking this work as ${targetResult}:`);
-                if (remarks === null) {
-                    return;
-                }
-                if (remarks.trim() === '') {
-                    alert('Remarks are required.');
-                    return;
+                if (targetResult === 'Negative') {
+                    remarks = prompt(`Please enter remarks for marking this work as ${targetResult}:`);
+                    if (remarks === null) {
+                        return;
+                    }
+                    if (remarks.trim() === '') {
+                        alert('Remarks are required for Negative result.');
+                        return;
+                    }
+                } else {
+                    remarks = prompt(`Please enter remarks for marking this work as ${targetResult} (optional):`);
+                    if (remarks === null) {
+                        return;
+                    }
                 }
             }
     

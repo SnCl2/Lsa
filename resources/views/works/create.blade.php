@@ -14,18 +14,18 @@
     <h1 class="mb-4">Create Work</h1>
     <form action="{{ route('works.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="custom_id">Custom ID</label>
                 <input type="text" class="form-control" id="custom_id" name="custom_id" placeholder="Auto-generated on save" readonly>
             </div>
+            @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
             <div class="form-group col-md-6">
                 <label for="assignment_date">Assignment Date</label>
                 <input type="date" class="form-control" id="assignment_date" name="assignment_date" value="{{ date('Y-m-d') }}" >
             </div>
+            @endif
         </div>
-        @endif
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="name_of_applicant">Name of Applicant</label>

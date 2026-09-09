@@ -18,6 +18,19 @@
             <h2 class="card-title">Work Details</h2>
         </div>
         <div class="card-body">
+            <!-- Work Identification -->
+            <h5 class="mb-3">Work Identification</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Work ID:</label>
+                    <p class="form-control-plaintext font-weight-bold">{{ $work->id }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Custom ID:</label>
+                    <p class="form-control-plaintext font-weight-bold">{{ $work->custom_id ?? 'N/A' }}</p>
+                </div>
+            </div>
+
             <!-- Applicant Details Section -->
             <h5 class="mb-3">Applicant Details</h5>
             <div class="row">
@@ -133,6 +146,16 @@
                         </span>
                     </p>
                 </div>
+                @if($work->result)
+                <div class="col-md-6">
+                    <label class="form-label">Result:</label>
+                    <p class="form-control-plaintext">
+                        <span class="badge {{ $work->result === 'Positive' ? 'bg-success' : ($work->result === 'Negative' ? 'bg-danger' : 'bg-secondary') }}">
+                            {{ $work->result }}
+                        </span>
+                    </p>
+                </div>
+                @endif
             </div>
 
             <!-- Assignee Information -->
