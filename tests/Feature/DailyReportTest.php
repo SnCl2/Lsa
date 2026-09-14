@@ -89,4 +89,153 @@ class DailyReportTest extends TestCase
         $exportResponse->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
         $this->assertStringContainsString('DAILY REPORT FOR', $exportResponse->streamedContent());
     }
+
+    public function test_daily_report_bank_branch_segmentation()
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $bankRole = Role::firstOrCreate(['name' => 'Bank Branch']);
+        $branchA = User::factory()->create(['name' => 'SBI Salt Lake Branch']);
+        $branchA->roles()->attach($bankRole->id);
+
+        $branchB = User::factory()->create(['name' => 'HDFC Park Street Branch']);
+        $branchB->roles()->attach($bankRole->id);
+
+        $surveyorRole = Role::firstOrCreate(['name' => 'Surveyor']);
+        $surveyor = User::factory()->create(['name' => 'Alice Surveyor']);
+        $surveyor->roles()->attach($surveyorRole->id);
+
+        $reporterRole = Role::firstOrCreate(['name' => 'Reporter']);
+        $reporter = User::factory()->create(['name' => 'Bob Reporter']);
+        $reporter->roles()->attach($reporterRole->id);
+
+        $now = Carbon::now();
+
+        // Work 1 under Branch A
+        $work1 = Work::factory()->create([
+            'bank_name' => 'SBI',
+            'bank_branch' => $branchA->id,
+            'created_at' => $now,
+            'created_by' => $admin->id,
+            'assignee_surveyor' => $surveyor->id,
+            'status' => 'Surveying',
+        ]);
+
+        Inspection::factory()->create([
+            'work_id' => $work1->id,
+            'created_by' => $surveyor->id,
+            'created_at' => $now,
+        ]);
+
+        // Work 2 under Branch B
+        $work2 = Work::factory()->create([
+            'bank_name' => 'HDFC',
+            'bank_branch' => $branchB->id,
+            'created_at' => $now,
+            'created_by' => $admin->id,
+            'assignee_reporter' => $reporter->id,
+            'reporting_started_at' => $now->copy()->subMinutes(20),
+            'reporting_ended_at' => $now,
+            'status' => 'Reporting',
+            'result' => 'Positive',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('works.daily-report', ['date' => $now->toDateString()]));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('branchSegmentation');
+        $response->assertViewHas('roleWorkMatrix');
+
+        $branchSegmentation = $response->viewData('branchSegmentation');
+        $this->assertArrayHasKey($branchA->id, $branchSegmentation);
+        $this->assertArrayHasKey($branchB->id, $branchSegmentation);
+
+        // Branch A verification
+        $this->assertEquals('SBI Salt Lake Branch', $branchSegmentation[$branchA->id]['branch_name']);
+        $this->assertEquals(1, $branchSegmentation[$branchA->id]['surveyed']);
+        $this->assertArrayHasKey('Surveyor', $branchSegmentation[$branchA->id]['users_by_role']);
+        $this->assertArrayHasKey($surveyor->id, $branchSegmentation[$branchA->id]['users_by_role']['Surveyor']);
+
+        // Branch B verification
+        $this->assertEquals('HDFC Park Street Branch', $branchSegmentation[$branchB->id]['branch_name']);
+        $this->assertEquals(1, $branchSegmentation[$branchB->id]['reported']);
+        $this->assertEquals(1, $branchSegmentation[$branchB->id]['positive']);
+        $this->assertArrayHasKey('Reporter', $branchSegmentation[$branchB->id]['users_by_role']);
+        $this->assertArrayHasKey($reporter->id, $branchSegmentation[$branchB->id]['users_by_role']['Reporter']);
+    }
+
+    public function test_daily_report_filtering_by_bank_branch_and_role()
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $bankRole = Role::firstOrCreate(['name' => 'Bank Branch']);
+        $branchA = User::factory()->create(['name' => 'Branch Alpha']);
+        $branchA->roles()->attach($bankRole->id);
+
+        $branchB = User::factory()->create(['name' => 'Branch Beta']);
+        $branchB->roles()->attach($bankRole->id);
+
+        $now = Carbon::now();
+
+        Work::factory()->create([
+            'bank_branch' => $branchA->id,
+            'created_at' => $now,
+            'created_by' => $admin->id,
+        ]);
+
+        Work::factory()->create([
+            'bank_branch' => $branchB->id,
+            'created_at' => $now,
+            'created_by' => $admin->id,
+        ]);
+
+        // Filter by branch A
+        $responseBranchA = $this->actingAs($admin)->get(route('works.daily-report', [
+            'date' => $now->toDateString(),
+            'bank_branch' => $branchA->id,
+        ]));
+
+        $responseBranchA->assertStatus(200);
+        $this->assertEquals(1, $responseBranchA->viewData('totalActiveWorks'));
+        $this->assertArrayHasKey($branchA->id, $responseBranchA->viewData('branchSegmentation'));
+        $this->assertArrayNotHasKey($branchB->id, $responseBranchA->viewData('branchSegmentation'));
+    }
+
+    public function test_daily_report_csv_export_includes_bank_branch_and_roles()
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $bankRole = Role::firstOrCreate(['name' => 'Bank Branch']);
+        $branch = User::factory()->create(['name' => 'Kolkata Main Branch']);
+        $branch->roles()->attach($bankRole->id);
+
+        $now = Carbon::now();
+
+        Work::factory()->create([
+            'bank_name' => 'Punjab National Bank',
+            'bank_branch' => $branch->id,
+            'created_at' => $now,
+            'created_by' => $admin->id,
+            'status' => 'New File',
+        ]);
+
+        $exportResponse = $this->actingAs($admin)->get(route('works.daily-report', [
+            'date' => $now->toDateString(),
+            'action' => 'export',
+        ]));
+
+        $exportResponse->assertStatus(200);
+        $content = $exportResponse->streamedContent();
+
+        $this->assertStringContainsString('BANK BRANCH SEGMENTATION SUMMARY', $content);
+        $this->assertStringContainsString('Kolkata Main Branch', $content);
+        $this->assertStringContainsString('Punjab National Bank', $content);
+        $this->assertStringContainsString('STAFF PERFORMANCE BY ROLE', $content);
+    }
 }
