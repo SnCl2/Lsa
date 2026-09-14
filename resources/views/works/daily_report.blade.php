@@ -3,19 +3,23 @@
 @section('content')
 <div class="container-fluid py-4 px-md-4">
     <!-- Breadcrumbs, Title & Actions Header -->
-    <div class="row align-items-center justify-content-between mb-4 no-print">
+    <div class="row align-items-center justify-content-between mb-3 no-print">
         <div class="col-12 col-lg-auto mb-3 mb-lg-0">
             <div class="d-flex align-items-center">
                 <div class="header-icon-box bg-primary text-white rounded-lg shadow-sm mr-3 p-3 text-center">
                     <i class="fas fa-chart-pie fa-2x"></i>
                 </div>
                 <div>
-                    <h1 class="h2 text-primary font-weight-bold mb-1">Daily Operations & Performance Dashboard</h1>
+                    <h1 class="h2 text-primary font-weight-bold mb-1">Operations & Work Performance Dashboard</h1>
                     <p class="text-muted mb-0 font-weight-500">
-                        <i class="far fa-calendar-alt mr-1 text-primary"></i> Report for: 
-                        <strong class="text-dark">{{ \Carbon\Carbon::parse($dateStr)->format('l, F j, Y') }}</strong>
-                        @if($dateStr === \Carbon\Carbon::today()->toDateString())
+                        <i class="far fa-calendar-alt mr-1 text-primary"></i> Period: 
+                        <strong class="text-dark">{{ $dateRangeLabel }}</strong>
+                        @if($period === 'today')
                             <span class="badge badge-success ml-2 font-weight-normal px-2 py-1"><i class="fas fa-circle fa-xs mr-1"></i> Today</span>
+                        @elseif($period === 'this_month')
+                            <span class="badge badge-info ml-2 font-weight-normal px-2 py-1"><i class="fas fa-calendar-alt fa-xs mr-1"></i> Current Month</span>
+                        @elseif($period === 'current_fy')
+                            <span class="badge badge-primary ml-2 font-weight-normal px-2 py-1"><i class="fas fa-university fa-xs mr-1"></i> {{ $currentFyLabel }}</span>
                         @endif
                     </p>
                 </div>
@@ -39,9 +43,9 @@
     <!-- Print Header (Visible ONLY on print) -->
     <div class="print-header d-none mb-4">
         <div class="text-center pb-2 border-bottom">
-            <h2 class="font-weight-bold mb-1">KKDA LSA DAILY OPERATIONS REPORT</h2>
-            <h5 class="text-secondary mb-1">Date: {{ \Carbon\Carbon::parse($dateStr)->format('l, F j, Y') }}</h5>
-            <small class="text-muted">Generated on {{ now()->format('d M Y, h:i A') }} | Daily Performance & Branch Segmentation</small>
+            <h2 class="font-weight-bold mb-1">KKDA LSA OPERATIONS & WORK REPORT</h2>
+            <h5 class="text-secondary mb-1">Period: {{ $dateRangeLabel }} ({{ $dateFrom }} to {{ $dateTo }})</h5>
+            <small class="text-muted">Generated on {{ now()->format('d M Y, h:i A') }} | Performance, Role Matrix & Branch Segmentation</small>
         </div>
         @if($selectedBranch || $selectedRole || $selectedStatus || $search)
             <div class="p-2 bg-light text-muted small mt-2">
@@ -54,42 +58,102 @@
         @endif
     </div>
 
-    <!-- Filter Toolbar Card -->
+    <!-- Quick Date Preset Pills Bar (1-Click Switching) -->
+    <div class="card border-0 shadow-sm rounded-xl mb-3 no-print bg-white">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                <span class="text-xs font-weight-bold text-uppercase text-muted mr-3 my-1">
+                    <i class="fas fa-history text-primary mr-1"></i> Quick Presets:
+                </span>
+                <div class="d-inline-flex flex-wrap gap-1 my-1">
+                    <!-- Today -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'today'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'today' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-clock mr-1"></i> Today
+                    </a>
+
+                    <!-- Previous Day -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'yesterday'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'yesterday' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-backward mr-1"></i> Previous Day
+                    </a>
+
+                    <!-- This Month -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'this_month'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'this_month' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-calendar-alt mr-1"></i> This Month ({{ $thisMonthLabel }})
+                    </a>
+
+                    <!-- Previous Month -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'prev_month'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'prev_month' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-calendar-minus mr-1"></i> Previous Month ({{ $prevMonthLabel }})
+                    </a>
+
+                    <!-- Current FY -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'current_fy'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'current_fy' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-university mr-1"></i> Current FY ({{ $currentFyLabel }})
+                    </a>
+
+                    <!-- Previous FY -->
+                    <a href="{{ route('works.daily-report', array_merge(request()->except(['date_from', 'date_to', 'date']), ['period' => 'prev_fy'])) }}" 
+                       class="btn btn-xs rounded-pill mr-1 mb-1 font-weight-600 {{ $period === 'prev_fy' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-landmark mr-1"></i> Previous FY ({{ $prevFyLabel }})
+                    </a>
+
+                    <!-- Custom Range Button -->
+                    <button type="button" onclick="toggleCustomRange()" 
+                            class="btn btn-xs rounded-pill mb-1 font-weight-600 {{ $period === 'custom' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                        <i class="fas fa-sliders-h mr-1"></i> Custom Range
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Filter Toolbar Card -->
     <div class="card border-0 shadow-sm rounded-xl mb-4 no-print filter-card">
         <div class="card-body p-3 p-md-4">
             <form action="{{ route('works.daily-report') }}" method="GET" class="mb-0" id="dailyReportFilterForm">
                 <div class="row align-items-end">
-                    <!-- Date Presets & Picker -->
-                    <div class="col-12 col-md-6 col-lg-3 mb-3 mb-lg-0">
-                        <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">Date Selection</label>
+                    <!-- Period Dropdown -->
+                    <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0">
+                        <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
+                            <i class="far fa-calendar-check text-primary mr-1"></i> Date Period
+                        </label>
+                        <select name="period" id="periodSelect" class="form-control form-control-sm custom-select" onchange="handlePeriodChange(this.value)">
+                            @foreach($datePresets as $pKey => $pLabel)
+                                <option value="{{ $pKey }}" {{ $period === $pKey ? 'selected' : '' }}>
+                                    {{ $pLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Custom Date From & To -->
+                    <div class="col-12 col-sm-6 col-lg-3 mb-3 mb-lg-0" id="customDateRangeInputs">
+                        <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
+                            <i class="fas fa-calendar-day text-info mr-1"></i> Date Range
+                        </label>
                         <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                                <a href="{{ route('works.daily-report', array_merge(request()->query(), ['date' => \Carbon\Carbon::parse($dateStr)->subDay()->toDateString()])) }}" 
-                                   class="btn btn-outline-secondary" title="Previous Day">
-                                    <i class="fas fa-chevron-left"></i>
-                                </a>
-                                <a href="{{ route('works.daily-report', array_merge(request()->query(), ['date' => \Carbon\Carbon::today()->toDateString()])) }}" 
-                                   class="btn btn-outline-secondary {{ $dateStr === \Carbon\Carbon::today()->toDateString() ? 'active font-weight-bold' : '' }}" title="Jump to Today">
-                                    Today
-                                </a>
+                            <input type="date" name="date_from" id="dateFromInput" class="form-control font-weight-bold" 
+                                   value="{{ $dateFrom }}" title="Date From" onchange="markCustomPeriod()">
+                            <div class="input-group-prepend input-group-append">
+                                <span class="input-group-text bg-light text-muted px-2 border-left-0 border-right-0">to</span>
                             </div>
-                            <input type="date" name="date" class="form-control text-center font-weight-bold" value="{{ $dateStr }}" onchange="document.getElementById('dailyReportFilterForm').submit()">
-                            <div class="input-group-append">
-                                <a href="{{ route('works.daily-report', array_merge(request()->query(), ['date' => \Carbon\Carbon::parse($dateStr)->addDay()->toDateString()])) }}" 
-                                   class="btn btn-outline-secondary" title="Next Day">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </div>
+                            <input type="date" name="date_to" id="dateToInput" class="form-control font-weight-bold" 
+                                   value="{{ $dateTo }}" title="Date To" onchange="markCustomPeriod()">
                         </div>
                     </div>
 
                     <!-- Bank Branch Filter -->
-                    <div class="col-12 col-sm-6 col-md-3 col-lg-3 mb-3 mb-lg-0">
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
                         <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
                             <i class="fas fa-university text-primary mr-1"></i> Bank Branch
                         </label>
                         <select name="bank_branch" class="form-control form-control-sm custom-select" onchange="document.getElementById('dailyReportFilterForm').submit()">
-                            <option value="">-- All Bank Branches --</option>
+                            <option value="">-- All Branches --</option>
                             @foreach($bankBranches as $id => $name)
                                 <option value="{{ $id }}" {{ (string)$selectedBranch === (string)$id ? 'selected' : '' }}>
                                     {{ $name }}
@@ -99,7 +163,7 @@
                     </div>
 
                     <!-- Role Filter -->
-                    <div class="col-12 col-sm-6 col-md-3 col-lg-2 mb-3 mb-lg-0">
+                    <div class="col-12 col-sm-6 col-lg-2 mb-3 mb-lg-0">
                         <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
                             <i class="fas fa-user-tag text-info mr-1"></i> Staff Role
                         </label>
@@ -113,58 +177,71 @@
                         </select>
                     </div>
 
-                    <!-- Status Filter -->
-                    <div class="col-12 col-sm-6 col-md-3 col-lg-2 mb-3 mb-lg-0">
+                    <!-- Status Filter & Submit Group -->
+                    <div class="col-12 col-lg-2 mb-3 mb-lg-0">
                         <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
                             <i class="fas fa-tasks text-success mr-1"></i> Status / Result
                         </label>
-                        <select name="status" class="form-control form-control-sm custom-select" onchange="document.getElementById('dailyReportFilterForm').submit()">
-                            <option value="">-- All Statuses --</option>
-                            @foreach($availableStatuses as $statusKey => $statusLabel)
-                                <option value="{{ $statusKey }}" {{ $selectedStatus === $statusKey ? 'selected' : '' }}>
-                                    {{ $statusLabel }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Search & Submit -->
-                    <div class="col-12 col-sm-6 col-md-3 col-lg-2 mb-3 mb-lg-0">
-                        <label class="font-weight-bold text-xs text-uppercase text-secondary mb-1">
-                            <i class="fas fa-search text-muted mr-1"></i> Search
-                        </label>
                         <div class="input-group input-group-sm">
-                            <input type="text" name="search" class="form-control" placeholder="ID, applicant..." value="{{ $search }}">
+                            <select name="status" class="form-control form-control-sm custom-select" onchange="document.getElementById('dailyReportFilterForm').submit()">
+                                <option value="">-- All Statuses --</option>
+                                @foreach($availableStatuses as $statusKey => $statusLabel)
+                                    <option value="{{ $statusKey }}" {{ $selectedStatus === $statusKey ? 'selected' : '' }}>
+                                        {{ $statusLabel }}
+                                    </option>
+                                @endforeach
+                            </select>
                             <div class="input-group-append">
                                 <button type="submit" class="btn btn-primary" title="Apply Filter">
                                     <i class="fas fa-arrow-right"></i>
                                 </button>
-                                @if($selectedBranch || $selectedRole || $selectedStatus || $search)
-                                    <a href="{{ route('works.daily-report', ['date' => $dateStr]) }}" class="btn btn-outline-danger" title="Clear Filters">
-                                        <i class="fas fa-times"></i>
+                                @if($selectedBranch || $selectedRole || $selectedStatus || $search || $period !== 'today')
+                                    <a href="{{ route('works.daily-report') }}" class="btn btn-outline-danger" title="Reset to Today">
+                                        <i class="fas fa-redo"></i>
                                     </a>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Secondary Search Row -->
+                <div class="row align-items-center mt-3 pt-3 border-top">
+                    <div class="col-12 col-md-6 mb-2 mb-md-0">
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-right-0 text-muted"><i class="fas fa-search"></i></span>
+                            </div>
+                            <input type="text" name="search" class="form-control border-left-0" 
+                                   placeholder="Quick search by applicant, custom ID, bank name, remarks..." value="{{ $search }}">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-outline-primary">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 text-md-right">
+                        <small class="text-muted">
+                            Showing results from <strong class="text-dark">{{ $dateFrom }}</strong> to <strong class="text-dark">{{ $dateTo }}</strong>
+                        </small>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- TOP SECTION: Overall Work Done Today - Executive KPI Dashboard -->
+    <!-- TOP SECTION: Overall Work Done in Period - Executive KPI Dashboard -->
     <div class="section-title-wrap mb-3 d-flex align-items-center justify-content-between">
         <h3 class="h5 text-dark font-weight-bold mb-0">
-            <i class="fas fa-tachometer-alt text-primary mr-2"></i> Overall Work Done Today & Executive Overview
+            <i class="fas fa-tachometer-alt text-primary mr-2"></i> Overall Work Done ({{ $dateRangeLabel }})
         </h3>
         <span class="badge badge-pill badge-light border text-muted px-3 py-1 font-weight-normal">
-            {{ $totalActiveWorks }} Total Files Active Today
+            {{ $totalActiveWorks }} Total Files Active in Period
         </span>
     </div>
 
     <!-- Primary Stage Volume KPI Cards -->
     <div class="row mb-3">
-        <!-- Total Active Today -->
+        <!-- Total Active -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-primary">
                 <div class="card-body p-3">
@@ -175,12 +252,12 @@
                         </div>
                     </div>
                     <div class="h3 font-weight-bold text-dark mb-0">{{ $totalActiveWorks }}</div>
-                    <small class="text-muted text-xs">Files touched today</small>
+                    <small class="text-muted text-xs">Files touched in period</small>
                 </div>
             </div>
         </div>
 
-        <!-- Created Today (In-Charge) -->
+        <!-- Created (In-Charge) -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-cyan">
                 <div class="card-body p-3">
@@ -196,7 +273,7 @@
             </div>
         </div>
 
-        <!-- Surveyed Today (Surveyor) -->
+        <!-- Surveyed (Surveyor) -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-teal">
                 <div class="card-body p-3">
@@ -212,7 +289,7 @@
             </div>
         </div>
 
-        <!-- Reported Today (Reporter) -->
+        <!-- Reported (Reporter) -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-warning">
                 <div class="card-body p-3">
@@ -228,7 +305,7 @@
             </div>
         </div>
 
-        <!-- Checked Today (Checker) -->
+        <!-- Checked (Checker) -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-success">
                 <div class="card-body p-3">
@@ -244,7 +321,7 @@
             </div>
         </div>
 
-        <!-- Delivered Today (Delivery) -->
+        <!-- Delivered (Delivery) -->
         <div class="col-6 col-md-4 col-xl-2 mb-3">
             <div class="card border-0 shadow-sm rounded-xl h-100 kpi-card border-top-dark">
                 <div class="card-body p-3">
@@ -366,7 +443,7 @@
                             <h4 class="h5 font-weight-bold text-dark mb-1">
                                 <i class="fas fa-code-branch text-primary mr-2"></i> Bank Branch Activity Segmentation
                             </h4>
-                            <p class="text-muted text-sm mb-0">Detailed view of which staff worked on which files for each bank branch today.</p>
+                            <p class="text-muted text-sm mb-0">Detailed view of which staff worked on which files for each bank branch in the selected period.</p>
                         </div>
                         <span class="badge badge-pill badge-primary px-3 py-2">
                             {{ count($branchSegmentation) }} Active {{ Str::plural('Branch', count($branchSegmentation)) }}
@@ -391,7 +468,7 @@
                                                     @endif
                                                 </h5>
                                                 <small class="text-muted">
-                                                    <i class="fas fa-folder-open mr-1"></i> {{ $branch['total_works'] }} {{ Str::plural('work', $branch['total_works']) }} active today
+                                                    <i class="fas fa-folder-open mr-1"></i> {{ $branch['total_works'] }} {{ Str::plural('work', $branch['total_works']) }} in period
                                                 </small>
                                             </div>
                                         </div>
@@ -401,27 +478,27 @@
                                     <div class="col-12 col-md-6 text-md-right">
                                         <div class="d-inline-flex flex-wrap gap-1 align-items-center">
                                             @if($branch['created'] > 0)
-                                                <span class="badge badge-pill badge-cyan-subtle mr-1 mb-1" title="Files Created Today">
+                                                <span class="badge badge-pill badge-cyan-subtle mr-1 mb-1" title="Files Created in Period">
                                                     <i class="fas fa-plus mr-1"></i>{{ $branch['created'] }} Created
                                                 </span>
                                             @endif
                                             @if($branch['surveyed'] > 0)
-                                                <span class="badge badge-pill badge-teal-subtle mr-1 mb-1" title="Inspections Done Today">
+                                                <span class="badge badge-pill badge-teal-subtle mr-1 mb-1" title="Inspections Done in Period">
                                                     <i class="fas fa-map-pin mr-1"></i>{{ $branch['surveyed'] }} Surveyed
                                                 </span>
                                             @endif
                                             @if($branch['reported'] > 0)
-                                                <span class="badge badge-pill badge-warning-subtle mr-1 mb-1" title="Reports Completed Today">
+                                                <span class="badge badge-pill badge-warning-subtle mr-1 mb-1" title="Reports Completed in Period">
                                                     <i class="fas fa-file-alt mr-1"></i>{{ $branch['reported'] }} Reported
                                                 </span>
                                             @endif
                                             @if($branch['checked'] > 0)
-                                                <span class="badge badge-pill badge-success-subtle mr-1 mb-1" title="Quality Checked Today">
+                                                <span class="badge badge-pill badge-success-subtle mr-1 mb-1" title="Quality Checked in Period">
                                                     <i class="fas fa-check-double mr-1"></i>{{ $branch['checked'] }} Checked
                                                 </span>
                                             @endif
                                             @if($branch['delivered'] > 0)
-                                                <span class="badge badge-pill badge-dark-subtle mr-1 mb-1" title="Delivered Today">
+                                                <span class="badge badge-pill badge-dark-subtle mr-1 mb-1" title="Delivered in Period">
                                                     <i class="fas fa-truck mr-1"></i>{{ $branch['delivered'] }} Delivered
                                                 </span>
                                             @endif
@@ -460,7 +537,7 @@
                                         @endforeach
                                     @endforeach
                                     @if(!$hasStaff)
-                                        <span class="text-muted text-xs mb-1">No staff actions recorded today.</span>
+                                        <span class="text-muted text-xs mb-1">No staff actions recorded in this period.</span>
                                     @endif
                                 </div>
                             </div>
@@ -534,7 +611,7 @@
                                                         @if($w['incharge_name'])
                                                             <span class="text-dark font-weight-500">{{ $w['incharge_name'] }}</span>
                                                             @if($w['is_created_today'])
-                                                                <span class="badge badge-cyan-subtle text-xxs d-block font-weight-normal">Created Today</span>
+                                                                <span class="badge badge-cyan-subtle text-xxs d-block font-weight-normal">Created</span>
                                                             @endif
                                                         @else
                                                             <span class="text-muted">-</span>
@@ -560,7 +637,7 @@
                                                             @if($w['reporting_duration'] !== null && $w['is_reported_today'])
                                                                 <small class="text-warning font-weight-bold d-block"><i class="far fa-clock"></i> {{ $w['reporting_duration'] }} mins</small>
                                                             @elseif($w['is_reported_today'])
-                                                                <small class="text-success font-weight-bold d-block">Done today</small>
+                                                                <small class="text-success font-weight-bold d-block">Done</small>
                                                             @endif
                                                         @else
                                                             <span class="text-muted">-</span>
@@ -574,7 +651,7 @@
                                                             @if($w['checking_duration'] !== null && $w['is_checked_today'])
                                                                 <small class="text-success font-weight-bold d-block"><i class="far fa-clock"></i> {{ $w['checking_duration'] }} mins</small>
                                                             @elseif($w['is_checked_today'])
-                                                                <small class="text-success font-weight-bold d-block">Checked today</small>
+                                                                <small class="text-success font-weight-bold d-block">Checked</small>
                                                             @endif
                                                         @else
                                                             <span class="text-muted">-</span>
@@ -609,8 +686,8 @@
                     @empty
                         <div class="card border-0 shadow-sm rounded-xl p-5 text-center">
                             <div class="text-muted mb-3"><i class="fas fa-university fa-3x text-light-primary"></i></div>
-                            <h5 class="font-weight-bold text-dark">No bank branch activities recorded for this date.</h5>
-                            <p class="text-muted mb-0">Try changing the date selector above or adjusting your filter parameters.</p>
+                            <h5 class="font-weight-bold text-dark">No bank branch activities recorded for this period.</h5>
+                            <p class="text-muted mb-0">Try changing the date period or clearing active filters.</p>
                         </div>
                     @endforelse
                 </div>
@@ -624,11 +701,10 @@
                             <h4 class="h5 font-weight-bold text-dark mb-1">
                                 <i class="fas fa-users-cog text-info mr-2"></i> Staff Work Distribution by Role
                             </h4>
-                            <p class="text-muted text-sm mb-0">Detailed breakdown of which staff members performed which roles, branches covered, and turnaround efficiency.</p>
+                            <p class="text-muted text-sm mb-0">Breakdown of which staff members performed which roles, branches covered, and turnaround efficiency.</p>
                         </div>
                     </div>
 
-                    <!-- Role Sections Accordion / Cards -->
                     @php
                         $roleColors = [
                             'Surveyor' => ['border' => 'border-top-teal', 'badge' => 'badge-teal-subtle', 'text' => 'text-teal', 'icon' => 'fa-map-marked-alt'],
@@ -648,7 +724,7 @@
                                         <h5 class="font-weight-bold mb-0 {{ $style['text'] }}">
                                             <i class="fas {{ $style['icon'] }} mr-2"></i> {{ $roleKey }} Work Output
                                         </h5>
-                                        <small class="text-muted">{{ count($roleWorkMatrix[$roleKey]) }} active staff in this role today</small>
+                                        <small class="text-muted">{{ count($roleWorkMatrix[$roleKey]) }} active staff in this role in period</small>
                                     </div>
                                     <span class="badge {{ $style['badge'] }} px-3 py-1 font-weight-bold font-size-sm">
                                         {{ array_sum(array_column($roleWorkMatrix[$roleKey], 'works_count')) }} Total Actions
@@ -752,7 +828,7 @@
                             <h5 class="h6 font-weight-bold text-primary mb-0">
                                 <i class="fas fa-trophy mr-2 text-warning"></i> Consolidated Staff Performance Leaderboard
                             </h5>
-                            <span class="badge badge-light border text-muted">All active users</span>
+                            <span class="badge badge-light border text-muted">Active staff in period</span>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -802,7 +878,7 @@
                                         @empty
                                             <tr>
                                                 <td colspan="9" class="text-center text-muted py-4">
-                                                    <i class="fas fa-info-circle mr-2"></i> No staff activity recorded for this date.
+                                                    <i class="fas fa-info-circle mr-2"></i> No staff activity recorded for this period.
                                                 </td>
                                             </tr>
                                         @endforelse
@@ -822,7 +898,7 @@
                             <h4 class="h5 font-weight-bold text-dark mb-1">
                                 <i class="fas fa-database text-success mr-2"></i> Master Detailed Work Log
                             </h4>
-                            <p class="text-muted text-sm mb-0">Consolidated tabular log of all works touched on the selected date.</p>
+                            <p class="text-muted text-sm mb-0">Consolidated tabular log of all works touched in the selected period.</p>
                         </div>
                         <span class="badge badge-success px-3 py-2 font-weight-bold">
                             {{ $detailedWorks->count() }} Total Works
@@ -887,7 +963,7 @@
                                                     @if($sName)
                                                         <div class="font-weight-bold text-dark">{{ $sName }}</div>
                                                         @if($work->inspection && $work->inspection->created_at)
-                                                            <small class="text-muted"><i class="far fa-clock"></i> {{ $work->inspection->created_at->format('h:i A') }}</small>
+                                                            <small class="text-muted"><i class="far fa-clock"></i> {{ $work->inspection->created_at->format('M j, h:i A') }}</small>
                                                         @endif
                                                     @else
                                                         <span class="text-muted">-</span>
@@ -899,7 +975,7 @@
                                                     @if($work->reporter)
                                                         <div class="font-weight-bold text-dark">{{ $work->reporter->name }}</div>
                                                         @if($work->reporting_started_at && $work->reporting_ended_at)
-                                                            <small class="text-muted d-block" title="Started at {{ $work->reporting_started_at->format('h:i A') }} - Ended at {{ $work->reporting_ended_at->format('h:i A') }}">
+                                                            <small class="text-muted d-block" title="Started at {{ $work->reporting_started_at->format('M j, h:i A') }} - Ended at {{ $work->reporting_ended_at->format('M j, h:i A') }}">
                                                                 <i class="far fa-clock"></i> Duration: {{ $work->reporting_duration_minutes }} mins
                                                             </small>
                                                         @endif
@@ -913,7 +989,7 @@
                                                     @if($work->checker)
                                                         <div class="font-weight-bold text-dark">{{ $work->checker->name }}</div>
                                                         @if($work->checking_started_at && $work->checking_ended_at)
-                                                            <small class="text-muted d-block" title="Started at {{ $work->checking_started_at->format('h:i A') }} - Ended at {{ $work->checking_ended_at->format('h:i A') }}">
+                                                            <small class="text-muted d-block" title="Started at {{ $work->checking_started_at->format('M j, h:i A') }} - Ended at {{ $work->checking_ended_at->format('M j, h:i A') }}">
                                                                 <i class="far fa-clock"></i> Duration: {{ $work->checking_duration_minutes }} mins
                                                             </small>
                                                         @endif
@@ -970,7 +1046,7 @@
                                             <tr>
                                                 <td colspan="10" class="text-center text-muted py-5">
                                                     <i class="fas fa-info-circle fa-2x mb-3 text-secondary d-block"></i>
-                                                    No active works recorded for this date with selected filters.
+                                                    No active works recorded for this period with selected filters.
                                                 </td>
                                             </tr>
                                         @endforelse
@@ -985,6 +1061,25 @@
         </div>
     </div>
 </div>
+
+<script>
+    function handlePeriodChange(val) {
+        if (val !== 'custom') {
+            document.getElementById('dailyReportFilterForm').submit();
+        } else {
+            document.getElementById('dateFromInput').focus();
+        }
+    }
+
+    function markCustomPeriod() {
+        document.getElementById('periodSelect').value = 'custom';
+    }
+
+    function toggleCustomRange() {
+        document.getElementById('periodSelect').value = 'custom';
+        document.getElementById('dateFromInput').focus();
+    }
+</script>
 
 <style>
     /* Styling & Design Tokens */

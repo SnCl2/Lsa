@@ -238,4 +238,77 @@ class DailyReportTest extends TestCase
         $this->assertStringContainsString('Punjab National Bank', $content);
         $this->assertStringContainsString('STAFF PERFORMANCE BY ROLE', $content);
     }
+
+    public function test_daily_report_this_month_and_previous_month_filters()
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $now = Carbon::now();
+        $prevMonthDate = $now->copy()->subMonthNoOverflow()->startOfMonth()->addDays(5);
+
+        // Work in this month
+        $workThisMonth = Work::factory()->create([
+            'created_at' => $now,
+            'created_by' => $admin->id,
+            'status' => 'New File',
+        ]);
+
+        // Work in previous month
+        $workPrevMonth = Work::factory()->create([
+            'created_at' => $prevMonthDate,
+            'created_by' => $admin->id,
+            'status' => 'New File',
+        ]);
+
+        // Query: this_month
+        $responseThisMonth = $this->actingAs($admin)->get(route('works.daily-report', ['period' => 'this_month']));
+        $responseThisMonth->assertStatus(200);
+        $this->assertEquals('this_month', $responseThisMonth->viewData('period'));
+        $this->assertEquals(1, $responseThisMonth->viewData('createdCount'));
+        $worksThisMonth = $responseThisMonth->viewData('detailedWorks');
+        $this->assertTrue($worksThisMonth->contains('id', $workThisMonth->id));
+        $this->assertFalse($worksThisMonth->contains('id', $workPrevMonth->id));
+
+        // Query: prev_month
+        $responsePrevMonth = $this->actingAs($admin)->get(route('works.daily-report', ['period' => 'prev_month']));
+        $responsePrevMonth->assertStatus(200);
+        $this->assertEquals('prev_month', $responsePrevMonth->viewData('period'));
+        $this->assertEquals(1, $responsePrevMonth->viewData('createdCount'));
+        $worksPrevMonth = $responsePrevMonth->viewData('detailedWorks');
+        $this->assertTrue($worksPrevMonth->contains('id', $workPrevMonth->id));
+        $this->assertFalse($worksPrevMonth->contains('id', $workThisMonth->id));
+    }
+
+    public function test_daily_report_custom_date_range_and_financial_year()
+    {
+        $admin = User::factory()->create();
+        $adminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $now = Carbon::now();
+
+        $workToday = Work::factory()->create([
+            'created_at' => $now,
+            'created_by' => $admin->id,
+        ]);
+
+        // Query: custom range
+        $responseCustom = $this->actingAs($admin)->get(route('works.daily-report', [
+            'period' => 'custom',
+            'date_from' => $now->copy()->subDays(2)->toDateString(),
+            'date_to' => $now->copy()->addDays(2)->toDateString(),
+        ]));
+
+        $responseCustom->assertStatus(200);
+        $this->assertEquals('custom', $responseCustom->viewData('period'));
+        $this->assertTrue($responseCustom->viewData('detailedWorks')->contains('id', $workToday->id));
+
+        // Query: current_fy
+        $responseFy = $this->actingAs($admin)->get(route('works.daily-report', ['period' => 'current_fy']));
+        $responseFy->assertStatus(200);
+        $this->assertEquals('current_fy', $responseFy->viewData('period'));
+        $this->assertTrue($responseFy->viewData('detailedWorks')->contains('id', $workToday->id));
+    }
 }

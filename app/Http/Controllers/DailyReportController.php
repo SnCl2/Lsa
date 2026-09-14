@@ -12,8 +12,112 @@ class DailyReportController extends Controller
 {
     public function index(Request $request)
     {
-        $dateStr = $request->input('date', Carbon::today()->toDateString());
-        $date = Carbon::parse($dateStr);
+        $now = Carbon::now();
+        $currentYear = $now->year;
+        $currentMonth = $now->month;
+
+        // Financial Year calculation (April 1 to March 31)
+        $currFyStartYear = $currentMonth >= 4 ? $currentYear : $currentYear - 1;
+        $currFyStartDate = Carbon::create($currFyStartYear, 4, 1)->startOfDay();
+        $currFyEndDate = Carbon::create($currFyStartYear + 1, 3, 31)->endOfDay();
+        $currentFyLabel = 'FY ' . $currFyStartYear . '-' . substr((string)($currFyStartYear + 1), -2);
+
+        $prevFyStartYear = $currFyStartYear - 1;
+        $prevFyStartDate = Carbon::create($prevFyStartYear, 4, 1)->startOfDay();
+        $prevFyEndDate = Carbon::create($prevFyStartYear + 1, 3, 31)->endOfDay();
+        $prevFyLabel = 'FY ' . $prevFyStartYear . '-' . substr((string)($prevFyStartYear + 1), -2);
+
+        $thisMonthStartDate = $now->copy()->startOfMonth()->startOfDay();
+        $thisMonthEndDate = $now->copy()->endOfMonth()->endOfDay();
+        $thisMonthLabel = $now->format('F Y');
+
+        $prevMonthDate = $now->copy()->subMonthNoOverflow();
+        $prevMonthStartDate = $prevMonthDate->copy()->startOfMonth()->startOfDay();
+        $prevMonthEndDate = $prevMonthDate->copy()->endOfMonth()->endOfDay();
+        $prevMonthLabel = $prevMonthDate->format('F Y');
+
+        // Resolve selected period & date range
+        $period = $request->input('period');
+
+        if ($period === 'today') {
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+        } elseif ($period === 'yesterday') {
+            $startDate = Carbon::yesterday()->startOfDay();
+            $endDate = Carbon::yesterday()->endOfDay();
+        } elseif ($period === 'this_month') {
+            $startDate = $thisMonthStartDate;
+            $endDate = $thisMonthEndDate;
+        } elseif ($period === 'prev_month') {
+            $startDate = $prevMonthStartDate;
+            $endDate = $prevMonthEndDate;
+        } elseif ($period === 'current_fy') {
+            $startDate = $currFyStartDate;
+            $endDate = $currFyEndDate;
+        } elseif ($period === 'prev_fy') {
+            $startDate = $prevFyStartDate;
+            $endDate = $prevFyEndDate;
+        } elseif ($period === 'custom' || $request->filled('date_from') || $request->filled('date_to')) {
+            $period = 'custom';
+            $startDate = $request->filled('date_from')
+                ? Carbon::parse($request->input('date_from'))->startOfDay()
+                : ($request->filled('date_to') ? Carbon::parse($request->input('date_to'))->startOfDay() : Carbon::today()->startOfDay());
+            $endDate = $request->filled('date_to')
+                ? Carbon::parse($request->input('date_to'))->endOfDay()
+                : ($request->filled('date_from') ? Carbon::parse($request->input('date_from'))->endOfDay() : Carbon::today()->endOfDay());
+
+            if ($startDate->gt($endDate)) {
+                $temp = $startDate;
+                $startDate = $endDate->copy()->startOfDay();
+                $endDate = $temp->copy()->endOfDay();
+            }
+        } elseif ($request->filled('date')) {
+            // Backward compatibility with ?date=YYYY-MM-DD
+            $singleDate = Carbon::parse($request->input('date'));
+            $startDate = $singleDate->copy()->startOfDay();
+            $endDate = $singleDate->copy()->endOfDay();
+            if ($singleDate->isToday()) {
+                $period = 'today';
+            } elseif ($singleDate->isYesterday()) {
+                $period = 'yesterday';
+            } else {
+                $period = 'custom';
+            }
+        } else {
+            // Default: today
+            $period = 'today';
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+        }
+
+        $dateStr = $startDate->toDateString();
+        $dateFrom = $startDate->toDateString();
+        $dateTo = $endDate->toDateString();
+
+        // Human-readable date range label
+        if ($startDate->isSameDay($endDate)) {
+            $dateRangeLabel = $startDate->format('l, F j, Y');
+        } elseif ($period === 'this_month') {
+            $dateRangeLabel = "This Month ({$thisMonthLabel}) — " . $startDate->format('M j, Y') . ' to ' . $endDate->format('M j, Y');
+        } elseif ($period === 'prev_month') {
+            $dateRangeLabel = "Previous Month ({$prevMonthLabel}) — " . $startDate->format('M j, Y') . ' to ' . $endDate->format('M j, Y');
+        } elseif ($period === 'current_fy') {
+            $dateRangeLabel = "Current Financial Year ({$currentFyLabel}) — " . $startDate->format('M j, Y') . ' to ' . $endDate->format('M j, Y');
+        } elseif ($period === 'prev_fy') {
+            $dateRangeLabel = "Previous Financial Year ({$prevFyLabel}) — " . $startDate->format('M j, Y') . ' to ' . $endDate->format('M j, Y');
+        } else {
+            $dateRangeLabel = $startDate->format('M j, Y') . ' to ' . $endDate->format('M j, Y');
+        }
+
+        $datePresets = [
+            'today' => 'Today',
+            'yesterday' => 'Previous Day',
+            'this_month' => 'This Month (' . $thisMonthLabel . ')',
+            'prev_month' => 'Previous Month (' . $prevMonthLabel . ')',
+            'current_fy' => 'Current Financial Year (' . $currentFyLabel . ')',
+            'prev_fy' => 'Previous Financial Year (' . $prevFyLabel . ')',
+            'custom' => 'Custom Date Range',
+        ];
 
         $selectedBranch = $request->input('bank_branch');
         $selectedRole = $request->input('role');
@@ -40,15 +144,15 @@ class DailyReportController extends Controller
             'Negative' => 'Negative Result',
             'Canceled' => 'Canceled',
             'Hold' => 'On Hold',
-            'Created' => 'Created Today',
-            'Surveyed' => 'Surveyed Today',
-            'Reported' => 'Reported Today',
-            'Checked' => 'Checked Today',
-            'Delivered' => 'Delivered Today',
+            'Created' => 'Created in Period',
+            'Surveyed' => 'Surveyed in Period',
+            'Reported' => 'Reported in Period',
+            'Checked' => 'Checked in Period',
+            'Delivered' => 'Delivered in Period',
         ];
 
-        // 1. Overall Work Done Today - Base KPI counts (unfiltered or filtered by branch)
-        $kpiQuery = function () use ($date, $selectedBranch) {
+        // 1. Overall Work Done in Period - Base KPI counts (unfiltered or filtered by branch)
+        $kpiQuery = function () use ($startDate, $endDate, $selectedBranch) {
             $q = Work::query();
             if ($selectedBranch) {
                 $q->where('bank_branch', $selectedBranch);
@@ -56,47 +160,47 @@ class DailyReportController extends Controller
             return $q;
         };
 
-        $createdCount = $kpiQuery()->whereDate('created_at', $date)->count();
+        $createdCount = $kpiQuery()->whereBetween('created_at', [$startDate, $endDate])->count();
 
-        $surveyedCount = $kpiQuery()->whereHas('inspection', function ($q) use ($date) {
-            $q->whereDate('created_at', $date);
+        $surveyedCount = $kpiQuery()->whereHas('inspection', function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate]);
         })->count();
 
-        $reportedCount = $kpiQuery()->whereDate('reporting_ended_at', $date)->count();
-        $checkedCount = $kpiQuery()->whereDate('checking_ended_at', $date)->count();
+        $reportedCount = $kpiQuery()->whereBetween('reporting_ended_at', [$startDate, $endDate])->count();
+        $checkedCount = $kpiQuery()->whereBetween('checking_ended_at', [$startDate, $endDate])->count();
 
         $deliveredCount = $kpiQuery()->where('delivery_status', 'Delivery Done')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->count();
 
         $canceledCount = $kpiQuery()->where('result', 'Canceled')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->count();
 
         $positiveCount = $kpiQuery()->where('result', 'Positive')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->count();
 
         $negativeCount = $kpiQuery()->where('result', 'Negative')
-            ->whereDate('updated_at', $date)
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->count();
 
         $holdCount = $kpiQuery()->where('is_hold', 1)
-            ->where(function ($q) use ($date) {
-                $q->whereDate('updated_at', $date)
-                  ->orWhereDate('created_at', $date);
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('updated_at', [$startDate, $endDate])
+                  ->orWhereBetween('created_at', [$startDate, $endDate]);
             })->count();
 
-        // 2. Fetch all works touched on this date with all related entities
-        $baseWorksQuery = Work::where(function ($query) use ($date) {
-            $query->whereDate('created_at', $date)
-                ->orWhereHas('inspection', function ($q) use ($date) {
-                    $q->whereDate('created_at', $date);
+        // 2. Fetch all works touched in this date range with all related entities
+        $baseWorksQuery = Work::where(function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate])
+                ->orWhereHas('inspection', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate]);
                 })
-                ->orWhereDate('reporting_ended_at', $date)
-                ->orWhereDate('checking_ended_at', $date)
-                ->orWhere(function ($q) use ($date) {
-                    $q->whereDate('updated_at', $date)
+                ->orWhereBetween('reporting_ended_at', [$startDate, $endDate])
+                ->orWhereBetween('checking_ended_at', [$startDate, $endDate])
+                ->orWhere(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('updated_at', [$startDate, $endDate])
                         ->where(function ($sub) {
                             $sub->where('delivery_status', 'Delivery Done')
                                 ->orWhereNotNull('result');
@@ -120,19 +224,25 @@ class DailyReportController extends Controller
 
         $allTouchedWorks = $baseWorksQuery->get();
 
+        // Helper lambda for date range check
+        $inRange = function ($dateToCheck) use ($startDate, $endDate) {
+            if (!$dateToCheck) return false;
+            return $dateToCheck->gte($startDate) && $dateToCheck->lte($endDate);
+        };
+
         // Apply Status Filter in collection if specified
         if ($selectedStatus) {
-            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedStatus, $date) {
+            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedStatus, $inRange) {
                 switch ($selectedStatus) {
                     case 'Positive': return $work->result === 'Positive';
                     case 'Negative': return $work->result === 'Negative';
                     case 'Canceled': return $work->result === 'Canceled';
                     case 'Hold': return (bool)$work->is_hold;
-                    case 'Created': return $work->created_at && $work->created_at->isSameDay($date);
-                    case 'Surveyed': return $work->inspection && $work->inspection->created_at && $work->inspection->created_at->isSameDay($date);
-                    case 'Reported': return $work->reporting_ended_at && $work->reporting_ended_at->isSameDay($date);
-                    case 'Checked': return $work->checking_ended_at && $work->checking_ended_at->isSameDay($date);
-                    case 'Delivered': return $work->delivery_status === 'Delivery Done' && $work->updated_at && $work->updated_at->isSameDay($date);
+                    case 'Created': return $inRange($work->created_at);
+                    case 'Surveyed': return $work->inspection && $inRange($work->inspection->created_at);
+                    case 'Reported': return $inRange($work->reporting_ended_at);
+                    case 'Checked': return $inRange($work->checking_ended_at);
+                    case 'Delivered': return $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
                     default: return true;
                 }
             })->values();
@@ -140,18 +250,18 @@ class DailyReportController extends Controller
 
         // Apply Role Filter in collection if specified
         if ($selectedRole) {
-            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedRole, $date) {
+            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedRole, $inRange) {
                 switch ($selectedRole) {
                     case 'In-Charge':
-                        return $work->created_at && $work->created_at->isSameDay($date) && $work->created_by;
+                        return $inRange($work->created_at) && $work->created_by;
                     case 'Surveyor':
-                        return $work->inspection && $work->inspection->created_at && $work->inspection->created_at->isSameDay($date) && ($work->inspection->created_by || $work->assignee_surveyor);
+                        return $work->inspection && $inRange($work->inspection->created_at) && ($work->inspection->created_by || $work->assignee_surveyor);
                     case 'Reporter':
-                        return $work->reporting_ended_at && $work->reporting_ended_at->isSameDay($date) && $work->assignee_reporter;
+                        return $inRange($work->reporting_ended_at) && $work->assignee_reporter;
                     case 'Checker':
-                        return $work->checking_ended_at && $work->checking_ended_at->isSameDay($date) && $work->assignee_checker;
+                        return $inRange($work->checking_ended_at) && $work->assignee_checker;
                     case 'Delivery Person':
-                        return $work->delivery_status === 'Delivery Done' && $work->updated_at && $work->updated_at->isSameDay($date) && $work->assignee_delivery;
+                        return $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at) && $work->assignee_delivery;
                     default:
                         return true;
                 }
@@ -161,14 +271,14 @@ class DailyReportController extends Controller
         $totalActiveWorks = $allTouchedWorks->count();
 
         // 3. Operational Efficiencies (Average durations)
-        $avgReporting = Work::whereDate('reporting_ended_at', $date)
+        $avgReporting = Work::whereBetween('reporting_ended_at', [$startDate, $endDate])
             ->whereNotNull('reporting_started_at')
             ->whereNotNull('reporting_ended_at')
             ->when($selectedBranch, fn($q) => $q->where('bank_branch', $selectedBranch))
             ->get()
             ->avg('reporting_duration_minutes') ?? 0;
 
-        $avgChecking = Work::whereDate('checking_ended_at', $date)
+        $avgChecking = Work::whereBetween('checking_ended_at', [$startDate, $endDate])
             ->whereNotNull('checking_started_at')
             ->whereNotNull('checking_ended_at')
             ->when($selectedBranch, fn($q) => $q->where('bank_branch', $selectedBranch))
@@ -210,17 +320,17 @@ class DailyReportController extends Controller
 
             $branchSegmentation[$branchId]['total_works']++;
 
-            $isCreatedToday = $work->created_at && $work->created_at->isSameDay($date);
-            $isSurveyedToday = $work->inspection && $work->inspection->created_at && $work->inspection->created_at->isSameDay($date);
-            $isReportedToday = $work->reporting_ended_at && $work->reporting_ended_at->isSameDay($date);
-            $isCheckedToday = $work->checking_ended_at && $work->checking_ended_at->isSameDay($date);
-            $isDeliveredToday = $work->delivery_status === 'Delivery Done' && $work->updated_at && $work->updated_at->isSameDay($date);
+            $isCreatedInRange = $inRange($work->created_at);
+            $isSurveyedInRange = $work->inspection && $inRange($work->inspection->created_at);
+            $isReportedInRange = $inRange($work->reporting_ended_at);
+            $isCheckedInRange = $inRange($work->checking_ended_at);
+            $isDeliveredInRange = $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
 
-            if ($isCreatedToday) $branchSegmentation[$branchId]['created']++;
-            if ($isSurveyedToday) $branchSegmentation[$branchId]['surveyed']++;
-            if ($isReportedToday) $branchSegmentation[$branchId]['reported']++;
-            if ($isCheckedToday) $branchSegmentation[$branchId]['checked']++;
-            if ($isDeliveredToday) $branchSegmentation[$branchId]['delivered']++;
+            if ($isCreatedInRange) $branchSegmentation[$branchId]['created']++;
+            if ($isSurveyedInRange) $branchSegmentation[$branchId]['surveyed']++;
+            if ($isReportedInRange) $branchSegmentation[$branchId]['reported']++;
+            if ($isCheckedInRange) $branchSegmentation[$branchId]['checked']++;
+            if ($isDeliveredInRange) $branchSegmentation[$branchId]['delivered']++;
 
             if ($work->result === 'Positive') $branchSegmentation[$branchId]['positive']++;
             if ($work->result === 'Negative') $branchSegmentation[$branchId]['negative']++;
@@ -228,14 +338,14 @@ class DailyReportController extends Controller
             if ($work->is_hold) $branchSegmentation[$branchId]['hold']++;
 
             // Associate users by role for this branch
-            if ($isCreatedToday && $work->creator) {
+            if ($isCreatedInRange && $work->creator) {
                 $uId = $work->creator->id;
                 $branchSegmentation[$branchId]['users_by_role']['In-Charge'][$uId] = [
                     'name' => $work->creator->name,
                     'count' => ($branchSegmentation[$branchId]['users_by_role']['In-Charge'][$uId]['count'] ?? 0) + 1,
                 ];
             }
-            if ($isSurveyedToday) {
+            if ($isSurveyedInRange) {
                 $surveyorUser = ($work->inspection && $work->inspection->creator) ? $work->inspection->creator : $work->surveyor;
                 if ($surveyorUser) {
                     $uId = $surveyorUser->id;
@@ -245,21 +355,21 @@ class DailyReportController extends Controller
                     ];
                 }
             }
-            if ($isReportedToday && $work->reporter) {
+            if ($isReportedInRange && $work->reporter) {
                 $uId = $work->reporter->id;
                 $branchSegmentation[$branchId]['users_by_role']['Reporter'][$uId] = [
                     'name' => $work->reporter->name,
                     'count' => ($branchSegmentation[$branchId]['users_by_role']['Reporter'][$uId]['count'] ?? 0) + 1,
                 ];
             }
-            if ($isCheckedToday && $work->checker) {
+            if ($isCheckedInRange && $work->checker) {
                 $uId = $work->checker->id;
                 $branchSegmentation[$branchId]['users_by_role']['Checker'][$uId] = [
                     'name' => $work->checker->name,
                     'count' => ($branchSegmentation[$branchId]['users_by_role']['Checker'][$uId]['count'] ?? 0) + 1,
                 ];
             }
-            if ($isDeliveredToday && $work->deliveryPerson) {
+            if ($isDeliveredInRange && $work->deliveryPerson) {
                 $uId = $work->deliveryPerson->id;
                 $branchSegmentation[$branchId]['users_by_role']['Delivery Person'][$uId] = [
                     'name' => $work->deliveryPerson->name,
@@ -277,14 +387,14 @@ class DailyReportController extends Controller
                 'delivery_status' => $work->delivery_status,
                 'is_hold' => (bool)$work->is_hold,
                 'remarks' => $work->remarks,
-                'is_created_today' => $isCreatedToday,
-                'is_surveyed_today' => $isSurveyedToday,
-                'is_reported_today' => $isReportedToday,
-                'is_checked_today' => $isCheckedToday,
-                'is_delivered_today' => $isDeliveredToday,
+                'is_created_today' => $isCreatedInRange,
+                'is_surveyed_today' => $isSurveyedInRange,
+                'is_reported_today' => $isReportedInRange,
+                'is_checked_today' => $isCheckedInRange,
+                'is_delivered_today' => $isDeliveredInRange,
                 'incharge_name' => $work->creator->name ?? null,
                 'surveyor_name' => ($work->inspection && $work->inspection->creator) ? $work->inspection->creator->name : ($work->surveyor->name ?? null),
-                'survey_time' => ($work->inspection && $work->inspection->created_at) ? $work->inspection->created_at->format('h:i A') : null,
+                'survey_time' => ($work->inspection && $work->inspection->created_at) ? $work->inspection->created_at->format('M j, h:i A') : null,
                 'reporter_name' => $work->reporter->name ?? null,
                 'reporting_duration' => $work->reporting_duration_minutes,
                 'checker_name' => $work->checker->name ?? null,
@@ -312,7 +422,7 @@ class DailyReportController extends Controller
             $branchName = $work->bankBranch ? $work->bankBranch->name : ($work->bank_name ? $work->bank_name : 'Unassigned Branch');
 
             // 1) In-Charge (Created)
-            if ($work->created_at && $work->created_at->isSameDay($date) && $work->creator) {
+            if ($inRange($work->created_at) && $work->creator) {
                 $u = $work->creator;
                 if (!isset($roleWorkMatrix['In-Charge'][$u->id])) {
                     $roleWorkMatrix['In-Charge'][$u->id] = [
@@ -333,7 +443,7 @@ class DailyReportController extends Controller
                     'branch' => $branchName,
                     'status' => $work->status,
                     'result' => $work->result,
-                    'time' => $work->created_at->format('h:i A'),
+                    'time' => $work->created_at->format('M j, h:i A'),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -342,9 +452,9 @@ class DailyReportController extends Controller
             }
 
             // 2) Surveyor
-            $isSurveyedToday = $work->inspection && $work->inspection->created_at && $work->inspection->created_at->isSameDay($date);
+            $isSurveyedInRange = $work->inspection && $inRange($work->inspection->created_at);
             $surveyorUser = ($work->inspection && $work->inspection->creator) ? $work->inspection->creator : $work->surveyor;
-            if ($isSurveyedToday && $surveyorUser) {
+            if ($isSurveyedInRange && $surveyorUser) {
                 $u = $surveyorUser;
                 if (!isset($roleWorkMatrix['Surveyor'][$u->id])) {
                     $roleWorkMatrix['Surveyor'][$u->id] = [
@@ -365,7 +475,7 @@ class DailyReportController extends Controller
                     'branch' => $branchName,
                     'status' => $work->status,
                     'result' => $work->result,
-                    'time' => $work->inspection->created_at->format('h:i A'),
+                    'time' => $work->inspection->created_at->format('M j, h:i A'),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -374,7 +484,7 @@ class DailyReportController extends Controller
             }
 
             // 3) Reporter
-            if ($work->reporting_ended_at && $work->reporting_ended_at->isSameDay($date) && $work->reporter) {
+            if ($inRange($work->reporting_ended_at) && $work->reporter) {
                 $u = $work->reporter;
                 if (!isset($roleWorkMatrix['Reporter'][$u->id])) {
                     $roleWorkMatrix['Reporter'][$u->id] = [
@@ -400,7 +510,7 @@ class DailyReportController extends Controller
                     'status' => $work->status,
                     'result' => $work->result,
                     'duration' => $work->reporting_duration_minutes,
-                    'time' => $work->reporting_ended_at->format('h:i A'),
+                    'time' => $work->reporting_ended_at->format('M j, h:i A'),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -409,7 +519,7 @@ class DailyReportController extends Controller
             }
 
             // 4) Checker
-            if ($work->checking_ended_at && $work->checking_ended_at->isSameDay($date) && $work->checker) {
+            if ($inRange($work->checking_ended_at) && $work->checker) {
                 $u = $work->checker;
                 if (!isset($roleWorkMatrix['Checker'][$u->id])) {
                     $roleWorkMatrix['Checker'][$u->id] = [
@@ -435,7 +545,7 @@ class DailyReportController extends Controller
                     'status' => $work->status,
                     'result' => $work->result,
                     'duration' => $work->checking_duration_minutes,
-                    'time' => $work->checking_ended_at->format('h:i A'),
+                    'time' => $work->checking_ended_at->format('M j, h:i A'),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -444,8 +554,8 @@ class DailyReportController extends Controller
             }
 
             // 5) Delivery Person
-            $isDeliveredToday = $work->delivery_status === 'Delivery Done' && $work->updated_at && $work->updated_at->isSameDay($date);
-            if ($isDeliveredToday && $work->deliveryPerson) {
+            $isDeliveredInRange = $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
+            if ($isDeliveredInRange && $work->deliveryPerson) {
                 $u = $work->deliveryPerson;
                 if (!isset($roleWorkMatrix['Delivery Person'][$u->id])) {
                     $roleWorkMatrix['Delivery Person'][$u->id] = [
@@ -466,7 +576,7 @@ class DailyReportController extends Controller
                     'branch' => $branchName,
                     'status' => $work->status,
                     'result' => $work->result,
-                    'time' => $work->updated_at->format('h:i A'),
+                    'time' => $work->updated_at->format('M j, h:i A'),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -478,7 +588,7 @@ class DailyReportController extends Controller
         // Calculate average timings for reporting & checking per user
         foreach ($userActivity as $userId => &$activity) {
             if (isset($activity['reported'])) {
-                $avgReportingUser = Work::whereDate('reporting_ended_at', $date)
+                $avgReportingUser = Work::whereBetween('reporting_ended_at', [$startDate, $endDate])
                     ->where('assignee_reporter', $userId)
                     ->whereNotNull('reporting_started_at')
                     ->whereNotNull('reporting_ended_at')
@@ -487,7 +597,7 @@ class DailyReportController extends Controller
                 $activity['avg_reporting_time'] = round($avgReportingUser, 1);
             }
             if (isset($activity['checked'])) {
-                $avgCheckingUser = Work::whereDate('checking_ended_at', $date)
+                $avgCheckingUser = Work::whereBetween('checking_ended_at', [$startDate, $endDate])
                     ->where('assignee_checker', $userId)
                     ->whereNotNull('checking_started_at')
                     ->whereNotNull('checking_ended_at')
@@ -518,6 +628,10 @@ class DailyReportController extends Controller
         if ($request->input('action') === 'export') {
             return $this->exportCsv(
                 $dateStr,
+                $dateFrom,
+                $dateTo,
+                $period,
+                $dateRangeLabel,
                 $createdCount,
                 $surveyedCount,
                 $reportedCount,
@@ -534,7 +648,16 @@ class DailyReportController extends Controller
         }
 
         return view('works.daily_report', compact(
+            'period',
+            'datePresets',
             'dateStr',
+            'dateFrom',
+            'dateTo',
+            'dateRangeLabel',
+            'currentFyLabel',
+            'prevFyLabel',
+            'thisMonthLabel',
+            'prevMonthLabel',
             'bankBranches',
             'availableRoles',
             'availableStatuses',
@@ -565,6 +688,10 @@ class DailyReportController extends Controller
 
     private function exportCsv(
         $dateStr,
+        $dateFrom,
+        $dateTo,
+        $period,
+        $dateRangeLabel,
         $createdCount,
         $surveyedCount,
         $reportedCount,
@@ -578,9 +705,10 @@ class DailyReportController extends Controller
         $roleWorkMatrix,
         $detailedWorks
     ) {
+        $filename = $dateFrom === $dateTo ? "daily_report_{$dateStr}.csv" : "daily_report_{$dateFrom}_to_{$dateTo}.csv";
         $headers = [
             "Content-type"        => "text/csv; charset=UTF-8",
-            "Content-Disposition" => "attachment; filename=daily_report_{$dateStr}.csv",
+            "Content-Disposition" => "attachment; filename={$filename}",
             "Pragma"              => "no-cache",
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
             "Expires"             => "0"
@@ -588,6 +716,9 @@ class DailyReportController extends Controller
 
         $callback = function () use (
             $dateStr,
+            $dateFrom,
+            $dateTo,
+            $dateRangeLabel,
             $createdCount,
             $surveyedCount,
             $reportedCount,
@@ -603,15 +734,19 @@ class DailyReportController extends Controller
         ) {
             $file = fopen('php://output', 'w');
 
-            // 1. Title
-            fputcsv($file, ["DAILY REPORT FOR {$dateStr}"]);
+            // 1. Title (always has 'DAILY REPORT FOR' for backward compatibility & clarity)
+            if ($dateFrom === $dateTo) {
+                fputcsv($file, ["DAILY REPORT FOR {$dateStr}"]);
+            } else {
+                fputcsv($file, ["DAILY REPORT FOR {$dateRangeLabel} ({$dateFrom} to {$dateTo})"]);
+            }
             fputcsv($file, []);
 
             // 2. Executive Summary
-            fputcsv($file, ["EXECUTIVE OVERVIEW METRICS (TODAY)"]);
+            fputcsv($file, ["EXECUTIVE OVERVIEW METRICS"]);
             fputcsv($file, ["Metric", "Count"]);
-            fputcsv($file, ["Total Files Active Today", count($detailedWorks)]);
-            fputcsv($file, ["New Files Created Today", $createdCount]);
+            fputcsv($file, ["Total Files Active in Period", count($detailedWorks)]);
+            fputcsv($file, ["New Files Created", $createdCount]);
             fputcsv($file, ["Field Surveys Completed", $surveyedCount]);
             fputcsv($file, ["Reports Drafted", $reportedCount]);
             fputcsv($file, ["Quality Checks Completed", $checkedCount]);
@@ -726,7 +861,7 @@ class DailyReportController extends Controller
                     $work->bankBranch->name ?? ($work->bank_name ? $work->bank_name . ' (Direct)' : '-'),
                     $work->creator->name ?? '-',
                     ($work->inspection && $work->inspection->creator) ? $work->inspection->creator->name : ($work->surveyor->name ?? '-'),
-                    $work->inspection ? $work->inspection->created_at->format('h:i A') : '-',
+                    $work->inspection ? $work->inspection->created_at->format('M j, h:i A') : '-',
                     $work->reporter->name ?? '-',
                     $work->reporting_duration_minutes ?? '-',
                     $work->checker->name ?? '-',
