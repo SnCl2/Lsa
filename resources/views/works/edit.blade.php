@@ -195,7 +195,17 @@
             </div>
         </div>
         <div class="form-row">
-            <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
+            <div class="form-group col-md-12">
+                <label for="remarks">Remarks</label>
+                <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Enter remarks (optional)">{{ $work->remarks }}</textarea>
+            </div>
+        </div>
+        @php
+            $canManageAdminFields = (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) && !auth()->user()->roles->contains('name', 'In-Charge');
+        @endphp
+        @if($canManageAdminFields)
+        <div class="form-row">
+            <div class="form-group col-md-4">
                 <label for="result">Result</label>
                 <select class="form-control" id="result" name="result">
                     <option value="">Select Result</option>
@@ -205,10 +215,9 @@
                     <option value="Return" {{ $work->result == 'Return' ? 'selected' : '' }}>Return</option>
                 </select>
             </div>
-            @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
             <div class="form-group col-md-4">
                 <label for="status">Status</label>
-                <select class="form-control" id="status" name="status" required>
+                <select class="form-control" id="status" name="status">
                     <option value="New File" {{ $work->status == 'New File' ? 'selected' : '' }}>New File</option>
                     <option value="Surveying" {{ $work->status == 'Surveying' ? 'selected' : '' }}>Surveying</option>
                     <option value="Reporting" {{ $work->status == 'Reporting' ? 'selected' : '' }}>Reporting</option>
@@ -218,8 +227,7 @@
                 </select>
                 <small class="form-text text-muted">To set Completed, first mark Printed = Yes from the works list.</small>
             </div>
-            @endif
-            <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
+            <div class="form-group col-md-4">
                 <label for="is_hold">Hold Status</label>
                 <div class="custom-control custom-switch mt-2">
                     <input type="hidden" name="is_hold" value="0">
@@ -232,30 +240,21 @@
             </div>
         </div>
         <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="report_submit_date">Report Submit Date</label>
                 <input type="date" class="form-control" id="report_submit_date" name="report_submit_date" value="{{ $work->report_submit_date ? (is_string($work->report_submit_date) ? $work->report_submit_date : $work->report_submit_date->format('Y-m-d')) : '' }}" placeholder="Set when report is printed">
                 <small class="form-text text-muted">Auto-set when Print is checked on index, or edit manually here.</small>
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-12">
-                <label for="remarks">Remarks</label>
-                <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Enter remarks (optional)">{{ $work->remarks }}</textarea>
-            </div>
-        </div>
-        @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
-        <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="payment_status">Payment Status</label>
-                <select class="form-control" id="payment_status" name="payment_status" required>
+                <select class="form-control" id="payment_status" name="payment_status">
                     <option value="Payment Due" {{ $work->payment_status == 'Payment Due' ? 'selected' : '' }}>Payment Due</option>
                     <option value="Paid" {{ $work->payment_status == 'Paid' ? 'selected' : '' }}>Paid</option>
                 </select>
             </div>
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
                 <label for="delivery_status">Delivery Status</label>
-                <select class="form-control" id="delivery_status" name="delivery_status" required>
+                <select class="form-control" id="delivery_status" name="delivery_status">
                     <option value="Delivery Due" {{ $work->delivery_status == 'Delivery Due' ? 'selected' : '' }}>Delivery Due</option>
                     <option value="Delivery Done" {{ $work->delivery_status == 'Delivery Done' ? 'selected' : '' }}>Delivery Done</option>
                 </select>

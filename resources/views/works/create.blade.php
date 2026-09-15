@@ -106,6 +106,64 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="project_name">Project Name</label>
+                            <input type="text" class="form-control" id="project_name" name="project_name" value="{{ old('project_name') }}" list="project_name_list" autocomplete="off">
+                            <datalist id="project_name_list">
+                                @foreach($projectNames as $pn)
+                                    <option value="{{ $pn->name }}"></option>
+                                @endforeach
+                            </datalist>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="loan_amount_requested">Loan Amount Requested</label>
+                            <div class="d-flex">
+                                <!-- Unit dropdown -->
+                                <select class="form-control mr-2" id="unit" style="max-width: 200px;">
+                                    <option value="">Select Unit</option>
+                                    <option value="Lakh">Lakh</option>
+                                    <option value="Cr">Cr</option>
+                                </select>
+                        
+                                <!-- Loan amount input -->
+                                <input type="text" class="form-control" id="loan_amount_requested" name="loan_amount_requested" value="{{ old('loan_amount_requested') }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="loan_type">Loan Type</label>
+                            <select class="form-control" id="loan_type" name="loan_type">
+                                <option value="">Select Loan Type</option>
+                                @foreach($loanTypes as $lt)
+                                    <option value="{{ $lt->name }}" {{ old('loan_type') == $lt->name ? 'selected' : '' }}>{{ $lt->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="work_type">Work Type</label>
+                            <select class="form-control" id="work_type" name="work_type">
+                                <option value="">Select Work Type</option>
+                                <option value="Valuation" {{ old('work_type', 'Valuation') == 'Valuation' ? 'selected' : '' }}>Valuation</option>
+                                <option value="Fair Rent Valuation" {{ old('work_type') == 'Fair Rent Valuation' ? 'selected' : '' }}>Fair Rent Valuation</option>
+                                <option value="Estimate" {{ old('work_type') == 'Estimate' ? 'selected' : '' }}>Estimate</option>
+                                <option value="Completion Certificate" {{ old('work_type') == 'Completion Certificate' ? 'selected' : '' }}>Completion Certificate</option>
+                                <option value="Vetting" {{ old('work_type') == 'Vetting' ? 'selected' : '' }}>Vetting</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="valuer">Valuer</label>
+                            <select class="form-control" id="valuer" name="valuer">
+                                <option value="">Select Valuer</option>
+                                <option value="a" {{ old('valuer') == 'a' ? 'selected' : '' }}>A</option>
+                                <option value="b" {{ old('valuer') == 'b' ? 'selected' : '' }}>B</option>
+                                <option value="c" {{ old('valuer') == 'c' ? 'selected' : '' }}>C</option>
+                                <option value="d" {{ old('valuer') == 'd' ? 'selected' : '' }}>D</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Part 1 Action Buttons -->
                     <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                         <div>
@@ -140,41 +198,7 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="project_name">Project Name</label>
-                            <input type="text" class="form-control part2-field" id="project_name" name="project_name" value="{{ old('project_name') }}" list="project_name_list" autocomplete="off">
-                            <datalist id="project_name_list">
-                                @foreach($projectNames as $pn)
-                                    <option value="{{ $pn->name }}"></option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="loan_amount_requested">Loan Amount Requested</label>
-                            <div class="d-flex">
-                                <!-- Unit dropdown -->
-                                <select class="form-control mr-2" id="unit" style="max-width: 200px;">
-                                    <option value="">Select Unit</option>
-                                    <option value="Lakh">Lakh</option>
-                                    <option value="Cr">Cr</option>
-                                </select>
-                        
-                                <!-- Loan amount input -->
-                                <input type="text" class="form-control part2-field" id="loan_amount_requested" name="loan_amount_requested" value="{{ old('loan_amount_requested') }}">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="loan_type">Loan Type</label>
-                            <select class="form-control part2-field" id="loan_type" name="loan_type">
-                                <option value="">Select Loan Type</option>
-                                @foreach($loanTypes as $lt)
-                                    <option value="{{ $lt->name }}" {{ old('loan_type') == $lt->name ? 'selected' : '' }}>{{ $lt->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-12">
                             <label for="pdf_1">Upload PDF</label>
                             <input type="file" class="form-control-file part2-field" id="pdf_1" name="pdf_1">
                         </div>
@@ -194,30 +218,17 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="work_type">Work Type</label>
-                            <select class="form-control part2-field" id="work_type" name="work_type">
-                                <option value="">Select Work Type</option>
-                                <option value="Valuation" {{ old('work_type', 'Valuation') == 'Valuation' ? 'selected' : '' }}>Valuation</option>
-                                <option value="Fair Rent Valuation" {{ old('work_type') == 'Fair Rent Valuation' ? 'selected' : '' }}>Fair Rent Valuation</option>
-                                <option value="Estimate" {{ old('work_type') == 'Estimate' ? 'selected' : '' }}>Estimate</option>
-                                <option value="Completion Certificate" {{ old('work_type') == 'Completion Certificate' ? 'selected' : '' }}>Completion Certificate</option>
-                                <option value="Vetting" {{ old('work_type') == 'Vetting' ? 'selected' : '' }}>Vetting</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="valuer">Valuer</label>
-                            <select class="form-control part2-field" id="valuer" name="valuer">
-                                <option value="">Select Valuer</option>
-                                <option value="a" {{ old('valuer') == 'a' ? 'selected' : '' }}>A</option>
-                                <option value="b" {{ old('valuer') == 'b' ? 'selected' : '' }}>B</option>
-                                <option value="c" {{ old('valuer') == 'c' ? 'selected' : '' }}>C</option>
-                                <option value="d" {{ old('valuer') == 'd' ? 'selected' : '' }}>D</option>
-                            </select>
+                        <div class="form-group col-md-12">
+                            <label for="remarks">Remarks</label>
+                            <textarea class="form-control part2-field" id="remarks" name="remarks" rows="3" placeholder="Enter remarks (optional)">{{ old('remarks') }}</textarea>
                         </div>
                     </div>
+                    @php
+                        $canManageAdminFields = (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) && !auth()->user()->roles->contains('name', 'In-Charge');
+                    @endphp
+                    @if($canManageAdminFields)
                     <div class="form-row">
-                        <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
+                        <div class="form-group col-md-4">
                             <label for="result">Result</label>
                             <select class="form-control part2-field" id="result" name="result">
                                 <option value="">Select Result</option>
@@ -227,7 +238,6 @@
                                 <option value="Return" {{ old('result') == 'Return' ? 'selected' : '' }}>Return</option>
                             </select>
                         </div>
-                        @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
                         <div class="form-group col-md-4">
                             <label for="status">Status</label>
                             <select class="form-control part2-field" id="status" name="status">
@@ -239,8 +249,7 @@
                                 <option value="Completed" {{ old('status') == 'Completed' ? 'selected' : '' }}>Completed</option>
                             </select>
                         </div>
-                        @endif
-                        <div class="form-group {{ (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')) ? 'col-md-4' : 'col-md-6' }}">
+                        <div class="form-group col-md-4">
                             <label for="is_hold">Hold Status</label>
                             <div class="custom-control custom-switch mt-2">
                                 <input type="hidden" name="is_hold" value="0">
@@ -252,13 +261,6 @@
                             <small class="form-text text-muted">Hold can be toggled without changing current workflow stage.</small>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-12">
-                            <label for="remarks">Remarks</label>
-                            <textarea class="form-control part2-field" id="remarks" name="remarks" rows="3" placeholder="Enter remarks (optional)">{{ old('remarks') }}</textarea>
-                        </div>
-                    </div>
-                    @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="payment_status">Payment Status</label>
@@ -416,7 +418,7 @@
         });
 
         @php
-            $part2Fields = ['pin_code', 'police_station', 'project_name', 'loan_amount_requested', 'loan_type', 'pdf_1', 'actual_value', 'realised_value', 'fair_market_value', 'work_type', 'valuer', 'result', 'status', 'is_hold', 'remarks', 'payment_status', 'delivery_status', 'assignee_surveyor', 'assignee_reporter', 'assignee_checker', 'assignee_delivery'];
+            $part2Fields = ['pin_code', 'police_station', 'pdf_1', 'actual_value', 'realised_value', 'fair_market_value', 'remarks', 'result', 'status', 'is_hold', 'payment_status', 'delivery_status', 'assignee_surveyor', 'assignee_reporter', 'assignee_checker', 'assignee_delivery'];
             $hasPart2Errors = false;
             if ($errors->any()) {
                 foreach ($part2Fields as $p2f) {
