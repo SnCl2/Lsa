@@ -72,7 +72,7 @@
             <!-- Address Section -->
             <h5 class="mt-4 mb-3">Address</h5>
             <div class="row">
-                @foreach(['address_line_1', 'address_line_2', 'state', 'district', 'pin_code', 'post_office', 'police_station'] as $field)
+                @foreach(['address_line_1', 'pin_code', 'police_station'] as $field)
                     <div class="col-md-6">
                         <label class="form-label">{{ ucwords(str_replace('_', ' ', $field)) }}:</label>
                         <p class="form-control-plaintext">{{ $work->$field ?? 'N/A' }}</p>

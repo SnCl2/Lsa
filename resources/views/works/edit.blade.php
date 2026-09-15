@@ -85,28 +85,8 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="address_line_2">Address Line 2</label>
-                <input type="text" class="form-control" id="address_line_2" name="address_line_2" value="{{ $work->address_line_2 }}">
-            </div>
-            <div class="form-group col-md-6">
-                <label for="state">State</label>
-                <input type="text" class="form-control" id="state" name="state" value="{{ $work->state }}">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="district">District</label>
-                <input type="text" class="form-control" id="district" name="district" value="{{ $work->district }}">
-            </div>
-            <div class="form-group col-md-6">
                 <label for="pin_code">Pin Code</label>
                 <input type="text" class="form-control" id="pin_code" name="pin_code" value="{{ $work->pin_code }}">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="post_office">Post Office</label>
-                <input type="text" class="form-control" id="post_office" name="post_office" value="{{ $work->post_office }}">
             </div>
             <div class="form-group col-md-6">
                 <label for="police_station">Police Station</label>
@@ -377,53 +357,6 @@
                     });
                 }
 
-                // Pincode to Post Office lookup functionality
-                const pinCodeInput = document.getElementById("pin_code");
-                if (pinCodeInput) {
-                    pinCodeInput.addEventListener("input", function() {
-                        const pincode = this.value.trim();
-                        const postOfficeField = document.getElementById("post_office");
-                        if (!postOfficeField) return;
-                        
-                        // Clear post office field when pincode is cleared
-                        if (pincode.length === 0) {
-                            postOfficeField.value = '';
-                            return;
-                        }
-                        
-                        // Only make request if pincode is 6 digits
-                        if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
-                            postOfficeField.placeholder = "Loading...";
-                            postOfficeField.disabled = true;
-                            
-                            fetch(`/api/pincode/${pincode}`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    postOfficeField.disabled = false;
-                                    postOfficeField.placeholder = "";
-                                    
-                                    if (data.success && data.post_offices && data.post_offices.length > 0) {
-                                        postOfficeField.value = data.post_offices[0];
-                                        if (data.post_offices.length > 1) {
-                                            postOfficeField.title = `Multiple post offices found: ${data.post_offices.join(', ')}`;
-                                        }
-                                    } else {
-                                        postOfficeField.value = '';
-                                        postOfficeField.placeholder = "No post office found for this pincode";
-                                    }
-                                })
-                                .catch(error => {
-                                    postOfficeField.disabled = false;
-                                    postOfficeField.placeholder = "";
-                                    postOfficeField.value = '';
-                                    console.error('Error fetching post office:', error);
-                                });
-                        } else if (pincode.length > 0) {
-                            postOfficeField.value = '';
-                            postOfficeField.placeholder = "Enter a valid 6-digit pincode";
-                        }
-                    });
-                }
 
                 const prefixSelect = document.getElementById('prefixSelect');
                 const addressInput = document.getElementById('address_line_1');

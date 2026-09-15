@@ -74,28 +74,8 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
-                <label for="address_line_2">Road Facility</label>
-                <input type="text" class="form-control" id="address_line_2" name="address_line_2" required>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="state">State</label>
-                <input type="text" class="form-control" id="state" name="state" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="district">District</label>
-                <input type="text" class="form-control" id="district" name="district" required>
-            </div>
-            <div class="form-group col-md-6">
                 <label for="pin_code">Pin Code</label>
                 <input type="text" class="form-control" id="pin_code" name="pin_code" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label for="post_office">Post Office</label>
-                <input type="text" class="form-control" id="post_office" name="post_office" required>
             </div>
             <div class="form-group col-md-6">
                 <label for="police_station">Police Station</label>
@@ -311,55 +291,6 @@
         }
     });
 
-    // Pincode to Post Office lookup functionality
-    document.getElementById("pin_code").addEventListener("input", function() {
-        const pincode = this.value.trim();
-        const postOfficeField = document.getElementById("post_office");
-        
-        // Clear post office field when pincode is cleared
-        if (pincode.length === 0) {
-            postOfficeField.value = '';
-            return;
-        }
-        
-        // Only make request if pincode is 6 digits
-        if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
-            // Show loading state
-            postOfficeField.placeholder = "Loading...";
-            postOfficeField.disabled = true;
-            
-            fetch(`/api/pincode/${pincode}`)
-                .then(response => response.json())
-                .then(data => {
-                    postOfficeField.disabled = false;
-                    postOfficeField.placeholder = "";
-                    
-                    if (data.success && data.post_offices && data.post_offices.length > 0) {
-                        // If multiple post offices, show the first one or create a dropdown
-                        if (data.post_offices.length === 1) {
-                            postOfficeField.value = data.post_offices[0];
-                        } else {
-                            // Multiple post offices - show first one but allow user to change
-                            postOfficeField.value = data.post_offices[0];
-                            postOfficeField.title = `Multiple post offices found: ${data.post_offices.join(', ')}`;
-                        }
-                    } else {
-                        postOfficeField.value = '';
-                        postOfficeField.placeholder = "No post office found for this pincode";
-                    }
-                })
-                .catch(error => {
-                    postOfficeField.disabled = false;
-                    postOfficeField.placeholder = "";
-                    postOfficeField.value = '';
-                    console.error('Error fetching post office:', error);
-                });
-        } else if (pincode.length > 0) {
-            // Invalid pincode format
-            postOfficeField.value = '';
-            postOfficeField.placeholder = "Enter a valid 6-digit pincode";
-        }
-    });
 </script>
 <script>
     const prefixSelect = document.getElementById('prefixSelect');

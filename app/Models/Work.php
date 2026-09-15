@@ -32,11 +32,7 @@ class Work extends Model
         // Address Details
         'source',
         'address_line_1',
-        'address_line_2',
-        'state',
-        'district',
         'pin_code',
-        'post_office',
         'police_station',
 
         // Loan Details
