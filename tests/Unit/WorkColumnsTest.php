@@ -22,3 +22,12 @@ test('work model casts valuation fields correctly', function () {
         ->and($work->hasCast('realised_value', 'decimal'))->toBeTrue()
         ->and($work->hasCast('fair_market_value', 'decimal'))->toBeTrue();
 });
+
+test('work model has rmls_number fillable', function () {
+    $work = new Work([
+        'rmls_number' => 'RMLS-12345',
+    ]);
+
+    expect($work->rmls_number)->toBe('RMLS-12345');
+});
+

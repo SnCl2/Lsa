@@ -19,6 +19,7 @@ class Work extends Model
         // Work Information
         'custom_id',
         'assignment_date',
+        'rmls_number',
         
         // Applicant Information
         'created_by',

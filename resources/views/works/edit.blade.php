@@ -54,10 +54,16 @@
         </div>
         <div class="form-row">
             <div class="form-group col-md-6">
+                <label for="rmls_number">RMLS Number</label>
+                <input type="text" class="form-control" id="rmls_number" name="rmls_number" value="{{ old('rmls_number', $work->rmls_number) }}" placeholder="Enter RMLS Number">
+            </div>
+            <div class="form-group col-md-6">
                 <label for="source">Source</label>
                 <input type="text" class="form-control" id="source" name="source" value="{{ $work->source }}">
             </div>
-            <div class="form-group col-md-6">
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-12">
                 <label for="address_line_1">HOLDING NO. / PREMISES NO.</label>
                 <div class="d-flex">
                     <!-- Dropdown -->

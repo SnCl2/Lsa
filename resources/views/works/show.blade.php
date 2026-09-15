@@ -21,13 +21,17 @@
             <!-- Work Identification -->
             <h5 class="mb-3">Work Identification</h5>
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Work ID:</label>
                     <p class="form-control-plaintext font-weight-bold">{{ $work->id }}</p>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Custom ID:</label>
                     <p class="form-control-plaintext font-weight-bold">{{ $work->custom_id ?? 'N/A' }}</p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">RMLS Number:</label>
+                    <p class="form-control-plaintext font-weight-bold">{{ $work->rmls_number ?? 'N/A' }}</p>
                 </div>
             </div>
 

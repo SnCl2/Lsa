@@ -527,6 +527,7 @@ public function worksForBankBranch(Request $request)
                     }),
                 ],
                 'assignment_date' => 'nullable|date',
+                'rmls_number' => 'nullable|string|max:255',
                 'name_of_applicant' => 'required|string|max:255',
                 'number_of_applicants' => 'required|string|max:255',
                 'bank_name' => 'nullable|string|max:255',
@@ -536,16 +537,16 @@ public function worksForBankBranch(Request $request)
                 'pin_code' => 'nullable|string|max:255',
                 'police_station' => 'nullable|string|max:255',
                 'project_name' => 'nullable|string|max:255',
-                'loan_amount_requested' => 'string|max:255',
+                'loan_amount_requested' => 'nullable|string|max:255',
                 'loan_type' => 'nullable|string|max:255',
                 'pdf_1' => 'nullable|file|mimes:pdf|max:204800000000000000000000',
-                'work_type' => ['required', Rule::in(['Valuation', 'Fair Rent Valuation', 'Estimate', 'Completion Certificate', 'Vetting'])],
+                'work_type' => ['nullable', Rule::in(['Valuation', 'Fair Rent Valuation', 'Estimate', 'Completion Certificate', 'Vetting'])],
                 'valuer' => ['nullable', Rule::in(['a', 'b', 'c', 'd'])],
                 // Hold/Canceled moved to result; keep status limited
-                'status' => [ Rule::in(['New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed'])],
+                'status' => ['nullable', Rule::in(['New File', 'Surveying', 'Reporting', 'Checking', 'Printing', 'Completed'])],
                 'is_hold' => 'nullable|boolean',
-                'payment_status' => [ Rule::in(['Payment Due', 'Paid'])],
-                'delivery_status' => [ Rule::in(['Delivery Due', 'Delivery Done'])],
+                'payment_status' => ['nullable', Rule::in(['Payment Due', 'Paid'])],
+                'delivery_status' => ['nullable', Rule::in(['Delivery Due', 'Delivery Done'])],
                 'result' => ['nullable', Rule::in(['Positive', 'Negative', 'Canceled', 'Return'])],
                 'remarks' => 'nullable|string',
                 'assignee_surveyor' => 'nullable|integer|exists:users,id',
@@ -556,6 +557,19 @@ public function worksForBankBranch(Request $request)
                 'realised_value' => 'nullable|numeric|min:0',
                 'fair_market_value' => 'nullable|numeric|min:0',
             ]);
+
+            if (empty($validatedData['status'])) {
+                $validatedData['status'] = 'New File';
+            }
+            if (empty($validatedData['work_type'])) {
+                $validatedData['work_type'] = 'Valuation';
+            }
+            if (empty($validatedData['payment_status'])) {
+                $validatedData['payment_status'] = 'Payment Due';
+            }
+            if (empty($validatedData['delivery_status'])) {
+                $validatedData['delivery_status'] = 'Delivery Due';
+            }
 
             if ($request->hasFile('pdf_1')) {
                 $filePath = $request->file('pdf_1')->store('pdfs', 'public');
@@ -575,7 +589,11 @@ public function worksForBankBranch(Request $request)
             }
             $work->save();
             
-            return redirect()->route('works.myWorks')->with('success', 'Work created successfully.');
+            $successMessage = ($request->input('form_step') === 'lead') 
+                ? 'Lead created successfully.' 
+                : 'Work created successfully.';
+
+            return redirect()->route('works.myWorks')->with('success', $successMessage);
         } catch (\Exception $e) {
             return back()->withInput()->withErrors(['error' => 'An error occurred: ' . $e->getMessage()]);
         }
@@ -630,6 +648,7 @@ public function worksForBankBranch(Request $request)
                     })->ignore($id),
                 ],
                 'assignment_date' => 'nullable|date',
+                'rmls_number' => 'nullable|string|max:255',
                 'name_of_applicant' => 'required|string|max:255',
                 'number_of_applicants' => 'nullable|numeric',
                 'bank_name' => 'nullable|string|max:255',
