@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('project-names', ProjectNameController::class)->except(['show']);
         Route::get('works/index', [WorkController::class, 'index'])->name('works.index');
         Route::get('works/incomplete', [WorkController::class, 'incomplete'])->name('works.incomplete');
+        Route::get('works/incomplete/export', [WorkController::class, 'exportIncomplete'])->name('works.incomplete.export');
         Route::get('works/export', [WorkController::class, 'export'])->name('works.export');
         Route::get('work/status', [WorkController::class, 'get_work_by_status'])->name('works.status');
         Route::get('works/dashboard', [WorkController::class, 'dashboard'])->name('works.dashboard');

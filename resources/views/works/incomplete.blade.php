@@ -11,30 +11,38 @@
             <p class="text-muted mb-0">Monitor and track ongoing tasks across different age categories.</p>
         </div>
         
-        <form method="GET" action="{{ route('works.incomplete') }}" class="d-flex align-items-center mt-3 mt-lg-0 p-2 bg-white rounded-pill shadow-sm" style="border: 1px solid #edf2f7;">
-            @if(request('search'))
-                <input type="hidden" name="search" value="{{ request('search') }}">
-            @endif
-            @if(request('tab'))
-                <input type="hidden" name="tab" value="{{ request('tab') }}">
-            @endif
-            <div class="d-flex align-items-center px-3" style="border-right: 1px solid #edf2f7;">
-                <i class="fas fa-university text-primary mr-2"></i>
-                <select name="bank_branch" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 180px; padding: 0; height: auto;">
-                    <option value="">All Branches</option>
-                    @foreach($usersByRole['Bank Branch'] as $id => $name)
-                        <option value="{{ $id }}" {{ (string)request('bank_branch') === (string)$id ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="d-flex align-items-center px-3">
-                <i class="fas fa-calendar-alt text-primary mr-2"></i>
-                <input type="month" name="month" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 150px;" value="{{ $month }}">
-            </div>
-            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 font-weight-bold" style="transition: transform 0.2s;">
-                Apply
+        <div class="d-flex align-items-center flex-wrap mt-3 mt-lg-0">
+            <form method="GET" action="{{ route('works.incomplete') }}" class="d-flex align-items-center p-2 bg-white rounded-pill shadow-sm" style="border: 1px solid #edf2f7;">
+                @if(request('search'))
+                    <input type="hidden" name="search" value="{{ request('search') }}">
+                @endif
+                @if(request('tab'))
+                    <input type="hidden" name="tab" value="{{ request('tab') }}">
+                @endif
+                <div class="d-flex align-items-center px-3" style="border-right: 1px solid #edf2f7;">
+                    <i class="fas fa-university text-primary mr-2"></i>
+                    <select name="bank_branch" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 180px; padding: 0; height: auto;">
+                        <option value="">All Branches</option>
+                        @foreach($usersByRole['Bank Branch'] as $id => $name)
+                            <option value="{{ $id }}" {{ (string)request('bank_branch') === (string)$id ? 'selected' : '' }}>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="d-flex align-items-center px-3">
+                    <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                    <input type="month" name="month" class="form-control border-0 shadow-none font-weight-bold text-secondary" style="background: transparent; outline: none; width: 150px;" value="{{ $month }}">
+                </div>
+                <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 font-weight-bold" style="transition: transform 0.2s;">
+                    Apply
+                </button>
+            </form>
+            @if(auth()->user()->roles->contains('name', 'Super Admin') || 
+                auth()->user()->roles->contains('name', 'KKDA Admin'))
+            <button type="button" class="btn btn-success rounded-pill px-3 py-2 font-weight-bold ml-2 shadow-sm" id="export-csv-btn">
+                <i class="fas fa-file-csv mr-1"></i> Export CSV
             </button>
-        </form>
+            @endif
+        </div>
     </div>
 
     <!-- KPI Cards (Tabs) -->
@@ -383,4 +391,43 @@ body {
     transform: scale(1.05);
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('export-csv-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            const params = new URLSearchParams(window.location.search);
+            
+            const monthInput = document.querySelector('input[name="month"]');
+            if (monthInput) {
+                if (monthInput.value) params.set('month', monthInput.value);
+                else params.delete('month');
+            }
+            
+            const branchSelect = document.querySelector('select[name="bank_branch"]');
+            if (branchSelect) {
+                if (branchSelect.value) params.set('bank_branch', branchSelect.value);
+                else params.delete('bank_branch');
+            }
+            
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                if (searchInput.value) params.set('search', searchInput.value);
+                else params.delete('search');
+            }
+
+            if (!params.has('tab') && '{{ $tab }}') {
+                params.set('tab', '{{ $tab }}');
+            }
+            if (!params.has('month') && '{{ $month }}') {
+                params.set('month', '{{ $month }}');
+            }
+
+            const exportUrl = '{{ route("works.incomplete.export") }}' + '?' + params.toString();
+            window.location.href = exportUrl;
+        });
+    }
+});
+</script>
 @endsection

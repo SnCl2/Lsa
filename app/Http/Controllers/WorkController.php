@@ -194,21 +194,11 @@ class WorkController extends Controller
         return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount'));
     }
 
-    public function export(Request $request)
+    private function downloadCsvResponse($works, $filename = 'works_export.csv')
     {
-        // Build the same filtered query as index
-        $query = Work::with([
-            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'relatives', 'inspection', 'report'
-        ])->orderBy('created_at', 'desc');
-
-        // Apply Filters
-        $query = $this->applyFilters($query, $request);
-    
-        $works = $query->get();
-
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="works_export.csv"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
         $callback = function () use ($works) {
@@ -260,6 +250,21 @@ class WorkController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function export(Request $request)
+    {
+        // Build the same filtered query as index
+        $query = Work::with([
+            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'relatives', 'inspection', 'report'
+        ])->orderBy('created_at', 'desc');
+
+        // Apply Filters
+        $query = $this->applyFilters($query, $request);
+    
+        $works = $query->get();
+
+        return $this->downloadCsvResponse($works, 'works_export.csv');
     }
 
 
@@ -865,6 +870,57 @@ public function worksForBankBranch(Request $request)
         $usersByRole = $this->getUsersByRole();
 
         return view('works.incomplete', compact('works', 'month', 'tab', 'recentCount', 'oldCount', 'veryOldCount', 'usersByRole'));
+    }
+
+    public function exportIncomplete(Request $request)
+    {
+        // 1. Get the month (default current month)
+        $month = $request->input('month', now()->format('Y-m'));
+        $parts = explode('-', $month);
+        $year = $parts[0] ?? now()->format('Y');
+        $monthNum = $parts[1] ?? now()->format('m');
+
+        // 2. Base query for incomplete works for the selected month
+        $query = Work::with([
+            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'relatives', 'inspection', 'report'
+        ])
+        ->where('status', '!=', 'Completed')
+        ->whereYear('created_at', $year)
+        ->whereMonth('created_at', $monthNum);
+
+        // Apply search if provided
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name_of_applicant', 'like', "%{$search}%")
+                  ->orWhere('custom_id', 'like', "%{$search}%")
+                  ->orWhere('source', 'like', "%{$search}%")
+                  ->orWhereHas('bankBranch', function($qb) use ($search) {
+                      $qb->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by Bank Branch if provided
+        if ($request->filled('bank_branch')) {
+            $query->where('bank_branch', (int)$request->bank_branch);
+        }
+
+        // Apply the active tab filter if provided
+        $fiveDaysAgo = now()->subDays(5);
+        $tenDaysAgo = now()->subDays(10);
+        $tab = $request->input('tab', 'recent');
+        if ($tab === 'recent') {
+            $query->where('created_at', '>=', $fiveDaysAgo);
+        } elseif ($tab === 'old') {
+            $query->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo);
+        } elseif ($tab === 'very_old') {
+            $query->where('created_at', '<', $tenDaysAgo);
+        }
+
+        $works = $query->orderBy('created_at', 'desc')->get();
+
+        return $this->downloadCsvResponse($works, 'incomplete_works_export.csv');
     }
 
     public function uploadFinalReports(Request $request, $id)
