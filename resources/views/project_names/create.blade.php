@@ -43,6 +43,35 @@
                     <small class="form-text text-muted">This name will be suggested when users type in the Project Name field during work entry.</small>
                 </div>
 
+                <div class="form-row mb-4">
+                    <div class="form-group col-md-6 mb-3 mb-md-0">
+                        <label class="font-weight-bold text-dark" for="project_type">Project Type <span class="text-danger">*</span></label>
+                        <select name="project_type" id="project_type" class="form-control form-control-lg" style="border-color: #ced4da;" required>
+                            @foreach($types as $type)
+                                <option value="{{ $type }}" {{ old('project_type', 'Normal') === $type ? 'selected' : '' }}>
+                                    {{ $type }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Category of the project (Normal, Approved, or Screen).</small>
+                    </div>
+
+                    <div class="form-group col-md-6 mb-0">
+                        <label class="font-weight-bold text-dark" for="project_rate">Project Rate</label>
+                        <div class="input-group input-group-lg">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light" style="border-color: #ced4da;">₹</span>
+                            </div>
+                            <input type="number" step="0.01" min="0" id="project_rate" name="project_rate" 
+                                   value="{{ old('project_rate') }}" 
+                                   placeholder="e.g. 3500.00" 
+                                   class="form-control" 
+                                   style="border-color: #ced4da;">
+                        </div>
+                        <small class="form-text text-muted">Applicable rate for this project (optional).</small>
+                    </div>
+                </div>
+
                 <div class="d-flex align-items-center pt-2">
                     <button type="submit" class="btn btn-primary px-4 py-2 font-weight-bold mr-2 shadow-sm" style="border-radius: 8px;">
                         <i class="fas fa-save mr-1"></i> Save Project Name

@@ -43,7 +43,7 @@
     <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('project-names.index') }}" class="row align-items-center">
-                <div class="col-md-9 col-sm-12 mb-2 mb-md-0">
+                <div class="col-md-6 col-sm-12 mb-2 mb-md-0">
                     <div class="input-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text bg-light border-right-0" style="border-color: #ced4da;">
@@ -55,12 +55,22 @@
                                value="{{ request('search') }}">
                     </div>
                 </div>
+                <div class="col-md-3 col-sm-12 mb-2 mb-md-0">
+                    <select name="type" class="form-control" style="border-color: #ced4da;" onchange="this.form.submit()">
+                        <option value="">All Project Types</option>
+                        @foreach($types as $type)
+                            <option value="{{ $type }}" {{ request('type') === $type ? 'selected' : '' }}>
+                                {{ $type }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-md-3 col-sm-12 d-flex">
                     <button type="submit" class="btn btn-primary btn-block mr-2 font-weight-bold">
-                        <i class="fas fa-search mr-1"></i> Search
+                        <i class="fas fa-filter mr-1"></i> Filter
                     </button>
-                    @if(request('search'))
-                        <a href="{{ route('project-names.index') }}" class="btn btn-outline-secondary" title="Clear search">
+                    @if(request('search') || request('type'))
+                        <a href="{{ route('project-names.index') }}" class="btn btn-outline-secondary" title="Clear filter">
                             <i class="fas fa-times"></i>
                         </a>
                     @endif
@@ -83,9 +93,11 @@
             <table class="table table-hover table-striped mb-0">
                 <thead class="thead-light">
                     <tr>
-                        <th class="text-center" style="width: 70px;">#</th>
+                        <th class="text-center" style="width: 60px;">#</th>
                         <th>Project Name</th>
-                        <th class="text-center" style="width: 220px;">Actions</th>
+                        <th class="text-center" style="width: 160px;">Project Type</th>
+                        <th class="text-right" style="width: 160px;">Project Rate</th>
+                        <th class="text-center" style="width: 200px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,11 +110,33 @@
                                 {{ $projectName->name }}
                             </td>
                             <td class="text-center align-middle">
+                                @if($projectName->project_type === 'Approved')
+                                    <span class="badge badge-success px-2 py-1 font-weight-bold" style="font-size: 0.82rem;">
+                                        <i class="fas fa-check-circle mr-1"></i>Approved
+                                    </span>
+                                @elseif($projectName->project_type === 'Screen')
+                                    <span class="badge badge-warning px-2 py-1 font-weight-bold text-dark" style="font-size: 0.82rem;">
+                                        <i class="fas fa-desktop mr-1"></i>Screen
+                                    </span>
+                                @else
+                                    <span class="badge badge-secondary px-2 py-1 font-weight-bold" style="font-size: 0.82rem;">
+                                        {{ $projectName->project_type ?? 'Normal' }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-right align-middle font-weight-bold text-dark">
+                                @if(!is_null($projectName->project_rate))
+                                    ₹ {{ number_format($projectName->project_rate, 2) }}
+                                @else
+                                    <span class="text-muted font-weight-normal">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center align-middle">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <a href="{{ route('project-names.edit', $projectName->id) }}" 
                                        class="btn btn-sm btn-info text-white mr-2 shadow-sm font-weight-bold px-3 py-1"
                                        style="border-radius: 6px; background-color: #0284c7; border-color: #0284c7;">
-                                        <i class="fas fa-edit mr-1"></i> Edit
+                                       <i class="fas fa-edit mr-1"></i> Edit
                                     </a>
                                     <form action="{{ route('project-names.destroy', $projectName->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($projectName->name) }}\'?')">
                                         @csrf
@@ -118,10 +152,10 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center py-5 text-muted">
+                            <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                                @if(request('search'))
-                                    <p class="mb-2 font-weight-bold">No project names match "{{ request('search') }}"</p>
+                                @if(request('search') || request('type'))
+                                    <p class="mb-2 font-weight-bold">No project names match your filter.</p>
                                     <a href="{{ route('project-names.index') }}" class="btn btn-sm btn-outline-primary">Clear Filter</a>
                                 @else
                                     <p class="mb-2 font-weight-bold">No project names found.</p>
