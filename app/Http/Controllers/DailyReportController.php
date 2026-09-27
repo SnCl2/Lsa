@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Work;
 use App\Models\Inspection;
 use App\Models\User;
+use App\Models\Role;
 use Carbon\Carbon;
 
 class DailyReportController extends Controller
@@ -647,6 +648,36 @@ class DailyReportController extends Controller
             );
         }
 
+        // 7. User Wise Report - Staff Roles and Users by Role
+        $reportStaffRoles = [
+            'Surveyor',
+            'Reporter',
+            'Checker',
+            'In-Charge',
+            'Delivery Person',
+            'Accountant',
+            'KKDA Admin',
+            'Super Admin',
+        ];
+
+        $usersByRole = [];
+        foreach ($reportStaffRoles as $rName) {
+            $usersByRole[$rName] = User::whereHas('roles', function ($q) use ($rName) {
+                $q->where('name', $rName);
+            })->orderBy('name')->get(['id', 'name', 'email'])->toArray();
+        }
+
+        $selectedUserRole = $request->input('user_role');
+        $selectedUserId = $request->input('user_id');
+
+        $userReportData = null;
+        if ($selectedUserId) {
+            $userReportData = $this->getUserReportData($selectedUserRole, $selectedUserId, $startDate, $endDate);
+            if (!$selectedUserRole && $userReportData) {
+                $selectedUserRole = $userReportData['role'];
+            }
+        }
+
         return view('works.daily_report', compact(
             'period',
             'datePresets',
@@ -682,7 +713,12 @@ class DailyReportController extends Controller
             'branchSegmentation',
             'roleWorkMatrix',
             'userActivity',
-            'detailedWorks'
+            'detailedWorks',
+            'reportStaffRoles',
+            'usersByRole',
+            'selectedUserRole',
+            'selectedUserId',
+            'userReportData'
         ));
     }
 
@@ -878,5 +914,228 @@ class DailyReportController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Build User Wise Report metrics and segmentations for a specific user and role within date range
+     */
+    private function getUserReportData($selectedUserRole, $selectedUserId, $startDate, $endDate)
+    {
+        $targetUser = User::with('roles')->find($selectedUserId);
+        if (!$targetUser) {
+            return null;
+        }
+
+        // If no role provided, detect primary role from assigned roles
+        if (!$selectedUserRole) {
+            $userRoleNames = $targetUser->roles->pluck('name')->toArray();
+            $knownRoles = ['Reporter', 'Checker', 'Surveyor', 'In-Charge', 'Delivery Person', 'Accountant', 'KKDA Admin', 'Super Admin'];
+            foreach ($knownRoles as $kr) {
+                if (in_array($kr, $userRoleNames)) {
+                    $selectedUserRole = $kr;
+                    break;
+                }
+            }
+            if (!$selectedUserRole) {
+                $selectedUserRole = $userRoleNames[0] ?? 'Staff';
+            }
+        }
+
+        $userWorksQuery = Work::query();
+
+        if ($selectedUserRole === 'Reporter') {
+            $userWorksQuery->where('assignee_reporter', $selectedUserId)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('reporting_ended_at', [$startDate, $endDate])
+                      ->orWhereBetween('reporting_started_at', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('assignment_date', [$startDate, $endDate]);
+                });
+        } elseif ($selectedUserRole === 'Checker') {
+            $userWorksQuery->where('assignee_checker', $selectedUserId)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('checking_ended_at', [$startDate, $endDate])
+                      ->orWhereBetween('checking_started_at', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('assignment_date', [$startDate, $endDate]);
+                });
+        } elseif ($selectedUserRole === 'Surveyor') {
+            $userWorksQuery->where(function ($q) use ($selectedUserId) {
+                    $q->where('assignee_surveyor', $selectedUserId)
+                      ->orWhereHas('inspection', function ($sub) use ($selectedUserId) {
+                          $sub->where('created_by', $selectedUserId);
+                      });
+                })
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('assignment_date', [$startDate, $endDate])
+                      ->orWhereHas('inspection', function ($sub) use ($startDate, $endDate) {
+                          $sub->whereBetween('created_at', [$startDate, $endDate]);
+                      });
+                });
+        } elseif ($selectedUserRole === 'In-Charge') {
+            $userWorksQuery->where('created_by', $selectedUserId)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate, $endDate])
+                      ->orWhereBetween('assignment_date', [$startDate, $endDate]);
+                });
+        } elseif ($selectedUserRole === 'Delivery Person') {
+            $userWorksQuery->where('assignee_delivery', $selectedUserId)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('updated_at', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate]);
+                });
+        } elseif ($selectedUserRole === 'Accountant') {
+            $userWorksQuery->where('billing_done_by', $selectedUserId)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('billing_done_at', [$startDate, $endDate])
+                      ->orWhereBetween('created_at', [$startDate, $endDate]);
+                });
+        } else {
+            $userWorksQuery->where(function ($q) use ($selectedUserId) {
+                $q->where('assignee_reporter', $selectedUserId)
+                  ->orWhere('assignee_checker', $selectedUserId)
+                  ->orWhere('assignee_surveyor', $selectedUserId)
+                  ->orWhere('created_by', $selectedUserId)
+                  ->orWhere('assignee_delivery', $selectedUserId)
+                  ->orWhere('billing_done_by', $selectedUserId);
+            })->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->orWhereBetween('assignment_date', [$startDate, $endDate])
+                  ->orWhereBetween('reporting_ended_at', [$startDate, $endDate])
+                  ->orWhereBetween('checking_ended_at', [$startDate, $endDate]);
+            });
+        }
+
+        $works = $userWorksQuery->with(['bankBranch', 'project', 'creator', 'surveyor', 'reporter', 'checker'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalWorks = $works->count();
+
+        // Timing calculations for Reporter & Checker
+        $timedReporting = $works->filter(fn($w) => $w->reporting_started_at && $w->reporting_ended_at);
+        $avgReportingMinutes = $timedReporting->count() > 0 ? round($timedReporting->avg('reporting_duration_minutes'), 1) : null;
+
+        $timedChecking = $works->filter(fn($w) => $w->checking_started_at && $w->checking_ended_at);
+        $avgCheckingMinutes = $timedChecking->count() > 0 ? round($timedChecking->avg('checking_duration_minutes'), 1) : null;
+
+        $formatDuration = function ($minutes) {
+            if ($minutes === null || $minutes <= 0) return null;
+            $hours = floor($minutes / 60);
+            $mins = round(fmod($minutes, 60));
+            if ($hours > 0) {
+                return "{$hours}h {$mins}m";
+            }
+            return "{$mins}m";
+        };
+
+        // 1. Bank Branch segmentation
+        $branchSeg = $works->groupBy(function ($w) {
+            return $w->bankBranch ? $w->bankBranch->name : ($w->bank_name ?: 'Unassigned Branch');
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 2. Status segmentation
+        $statusSeg = $works->groupBy(function ($w) {
+            return !empty($w->status) ? trim($w->status) : 'Unknown';
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 3. Result segmentation
+        $resultSeg = $works->groupBy(function ($w) {
+            return !empty($w->result) ? trim($w->result) : 'Pending / Not Specified';
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 4. Valuer segmentation
+        $valuerSeg = $works->groupBy(function ($w) {
+            return !empty($w->valuer) ? strtoupper(trim($w->valuer)) : 'Unassigned';
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 5. Project Name segmentation
+        $projectSeg = $works->groupBy(function ($w) {
+            $p = !empty($w->project_name) ? trim($w->project_name) : 'None';
+            return ($p === '0' || $p === '00' || strtolower($p) === 'na') ? 'None' : $p;
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 6. Loan Type segmentation
+        $loanTypeSeg = $works->groupBy(function ($w) {
+            return !empty($w->loan_type) ? strtoupper(trim($w->loan_type)) : 'Unspecified';
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // 7. Work Type segmentation
+        $workTypeSeg = $works->groupBy(function ($w) {
+            return !empty($w->work_type) ? trim($w->work_type) : 'Standard';
+        })->map(function ($group) use ($totalWorks) {
+            $cnt = $group->count();
+            return [
+                'count' => $cnt,
+                'percentage' => $totalWorks > 0 ? round(($cnt / $totalWorks) * 100, 1) : 0,
+            ];
+        })->sortByDesc('count');
+
+        // Summary counts
+        $completedCount = $works->where('status', 'Completed')->count();
+        $holdCount = $works->where('is_hold', 1)->count();
+        $canceledCount = $works->where('result', 'Canceled')->count();
+        $inProgressCount = max(0, $totalWorks - $completedCount - $holdCount - $canceledCount);
+
+        return [
+            'user' => $targetUser,
+            'role' => $selectedUserRole,
+            'totalWorks' => $totalWorks,
+            'completedCount' => $completedCount,
+            'holdCount' => $holdCount,
+            'canceledCount' => $canceledCount,
+            'inProgressCount' => $inProgressCount,
+            'avgReportingMinutes' => $avgReportingMinutes,
+            'avgReportingFormatted' => $formatDuration($avgReportingMinutes),
+            'timedReportingCount' => $timedReporting->count(),
+            'avgCheckingMinutes' => $avgCheckingMinutes,
+            'avgCheckingFormatted' => $formatDuration($avgCheckingMinutes),
+            'timedCheckingCount' => $timedChecking->count(),
+            'branchSeg' => $branchSeg,
+            'statusSeg' => $statusSeg,
+            'resultSeg' => $resultSeg,
+            'valuerSeg' => $valuerSeg,
+            'projectSeg' => $projectSeg,
+            'loanTypeSeg' => $loanTypeSeg,
+            'workTypeSeg' => $workTypeSeg,
+            'recentWorks' => $works->take(50),
+        ];
     }
 }
