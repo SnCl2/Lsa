@@ -199,6 +199,11 @@ class Work extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function project()
+    {
+        return $this->belongsTo(ProjectName::class, 'project_name', 'name');
+    }
+
     /**
      * Get reporting duration in minutes (null if incomplete).
      */

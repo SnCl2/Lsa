@@ -84,12 +84,48 @@
                 @endforeach
             </div>
 
-            <!-- Loan Details -->
-            <h5 class="mt-4 mb-3">Loan Details</h5>
+            <!-- Loan & Project Details -->
+            <h5 class="mt-4 mb-3">Loan & Project Details</h5>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Project Name:</label>
-                    <p class="form-control-plaintext">{{ $work->project_name ?? 'N/A' }}</p>
+                    <p class="form-control-plaintext font-weight-bold">{{ $work->project_name ?? 'N/A' }}</p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Project Type:</label>
+                    <p class="form-control-plaintext">
+                        @if($work->project)
+                            @if($work->project->project_type === 'Approved')
+                                <span class="badge bg-success text-white px-2 py-1 font-weight-bold">
+                                    <i class="fas fa-check-circle mr-1"></i>Approved
+                                </span>
+                            @elseif($work->project->project_type === 'Screen')
+                                <span class="badge bg-warning text-dark px-2 py-1 font-weight-bold">
+                                    <i class="fas fa-desktop mr-1"></i>Screen
+                                </span>
+                            @else
+                                <span class="badge bg-secondary text-white px-2 py-1 font-weight-bold">
+                                    {{ $work->project->project_type ?? 'Normal' }}
+                                </span>
+                            @endif
+                        @elseif($work->project_name)
+                            <span class="text-muted font-italic">Not specified</span>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Project Rate:</label>
+                    <p class="form-control-plaintext font-weight-bold">
+                        @if($work->project && !is_null($work->project->project_rate))
+                            <span class="text-success">₹ {{ number_format($work->project->project_rate, 2) }}</span>
+                        @elseif($work->project_name)
+                            <span class="text-muted font-italic font-weight-normal">—</span>
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </p>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Loan Amount Requested:</label>

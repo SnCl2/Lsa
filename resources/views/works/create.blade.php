@@ -109,12 +109,26 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="project_name">Project Name</label>
-                            <input type="text" class="form-control" id="project_name" name="project_name" value="{{ old('project_name') }}" list="project_name_list" autocomplete="off">
+                            <input type="text" class="form-control" id="project_name" name="project_name" value="{{ old('project_name') }}" list="project_name_list" autocomplete="off" placeholder="Type or select project...">
                             <datalist id="project_name_list">
                                 @foreach($projectNames as $pn)
-                                    <option value="{{ $pn->name }}"></option>
+                                    <option value="{{ $pn->name }}">{{ $pn->project_type ?? 'Normal' }} | Rate: {{ !is_null($pn->project_rate) ? '₹' . number_format($pn->project_rate, 2) : 'N/A' }}</option>
                                 @endforeach
                             </datalist>
+
+                            <!-- Dynamic Project Type & Rate Card -->
+                            <div id="project_info_box" class="mt-2 p-2 px-3 rounded border bg-light shadow-sm" style="display: none;">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                    <div>
+                                        <span class="text-muted text-uppercase font-weight-bold mr-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Type:</span>
+                                        <span id="project_type_badge" class="badge badge-secondary px-2 py-1 font-weight-bold">Normal</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted text-uppercase font-weight-bold mr-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Rate:</span>
+                                        <span id="project_rate_badge" class="font-weight-bold text-dark">—</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="loan_amount_requested">Loan Amount Requested</label>
@@ -455,5 +469,59 @@
         const cleanedValue = currentValue.replace(/^(Holding No|Premises No|Khatian No):\s*/i, '');
         addressInput.value = prefix ? `${prefix}: ${cleanedValue}` : cleanedValue;
     });
+
+    // Dynamic Project Type & Rate details
+    const projectData = {
+        @foreach($projectNames as $pn)
+            {{ json_encode($pn->name) }}: {
+                type: {{ json_encode($pn->project_type ?? 'Normal') }},
+                rate: {{ json_encode(!is_null($pn->project_rate) ? (float)$pn->project_rate : null) }}
+            },
+        @endforeach
+    };
+
+    function updateProjectDetails() {
+        const projectInput = document.getElementById('project_name');
+        const infoBox = document.getElementById('project_info_box');
+        const typeBadge = document.getElementById('project_type_badge');
+        const rateBadge = document.getElementById('project_rate_badge');
+
+        if (!projectInput || !infoBox) return;
+
+        const val = projectInput.value.trim();
+        if (val && projectData[val]) {
+            const item = projectData[val];
+            infoBox.style.display = 'block';
+
+            if (item.type === 'Approved') {
+                typeBadge.className = 'badge badge-success px-2 py-1 font-weight-bold';
+                typeBadge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Approved';
+            } else if (item.type === 'Screen') {
+                typeBadge.className = 'badge badge-warning px-2 py-1 font-weight-bold text-dark';
+                typeBadge.innerHTML = '<i class="fas fa-desktop mr-1"></i>Screen';
+            } else {
+                typeBadge.className = 'badge badge-secondary px-2 py-1 font-weight-bold';
+                typeBadge.textContent = item.type || 'Normal';
+            }
+
+            if (item.rate !== null && item.rate !== undefined) {
+                const formattedRate = '₹ ' + Number(item.rate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                rateBadge.className = 'font-weight-bold text-success';
+                rateBadge.textContent = formattedRate;
+            } else {
+                rateBadge.className = 'text-muted font-italic font-weight-normal';
+                rateBadge.textContent = 'Not specified';
+            }
+        } else {
+            infoBox.style.display = 'none';
+        }
+    }
+
+    const projectInputEl = document.getElementById('project_name');
+    if (projectInputEl) {
+        projectInputEl.addEventListener('input', updateProjectDetails);
+        projectInputEl.addEventListener('change', updateProjectDetails);
+        updateProjectDetails();
+    }
 </script>
 @endsection

@@ -632,7 +632,8 @@ public function worksForBankBranch(Request $request)
         'checker', 
         'deliveryPerson', 
         'bankBranch', 
-        'relatives'
+        'relatives',
+        'project'
     ])->findOrFail($id);
 
     return view('works.show', compact('work'));
