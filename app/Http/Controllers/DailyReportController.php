@@ -171,43 +171,46 @@ class DailyReportController extends Controller
         $checkedCount = $kpiQuery()->whereBetween('checking_ended_at', [$startDate, $endDate])->count();
 
         $deliveredCount = $kpiQuery()->where('delivery_status', 'Delivery Done')
-            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('report_submit_date', [$startDate, $endDate])
+                  ->orWhereBetween('checking_ended_at', [$startDate, $endDate])
+                  ->orWhereBetween('created_at', [$startDate, $endDate]);
+            })
             ->count();
 
-        $canceledCount = $kpiQuery()->where('result', 'Canceled')
-            ->whereBetween('updated_at', [$startDate, $endDate])
-            ->count();
+        $periodWorkFilter = function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('created_at', [$startDate, $endDate])
+              ->orWhereBetween('assignment_date', [$startDate, $endDate])
+              ->orWhereBetween('report_submit_date', [$startDate, $endDate])
+              ->orWhereBetween('checking_ended_at', [$startDate, $endDate])
+              ->orWhereBetween('reporting_ended_at', [$startDate, $endDate])
+              ->orWhereHas('inspection', function ($sub) use ($startDate, $endDate) {
+                  $sub->whereBetween('created_at', [$startDate, $endDate]);
+              });
+        };
 
-        $positiveCount = $kpiQuery()->where('result', 'Positive')
-            ->whereBetween('updated_at', [$startDate, $endDate])
-            ->count();
-
-        $negativeCount = $kpiQuery()->where('result', 'Negative')
-            ->whereBetween('updated_at', [$startDate, $endDate])
-            ->count();
+        $canceledCount = $kpiQuery()->where('result', 'Canceled')->where($periodWorkFilter)->count();
+        $positiveCount = $kpiQuery()->where('result', 'Positive')->where($periodWorkFilter)->count();
+        $negativeCount = $kpiQuery()->where('result', 'Negative')->where($periodWorkFilter)->count();
 
         $holdCount = $kpiQuery()->where('is_hold', 1)
             ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('updated_at', [$startDate, $endDate])
-                  ->orWhereBetween('created_at', [$startDate, $endDate]);
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->orWhereBetween('assignment_date', [$startDate, $endDate]);
             })->count();
 
         // 2. Fetch all works touched in this date range with all related entities
         $baseWorksQuery = Work::where(function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
+                ->orWhereBetween('assignment_date', [$startDate, $endDate])
                 ->orWhereHas('inspection', function ($q) use ($startDate, $endDate) {
                     $q->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->orWhereBetween('reporting_ended_at', [$startDate, $endDate])
                 ->orWhereBetween('checking_ended_at', [$startDate, $endDate])
-                ->orWhere(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('updated_at', [$startDate, $endDate])
-                        ->where(function ($sub) {
-                            $sub->where('delivery_status', 'Delivery Done')
-                                ->orWhereNotNull('result');
-                        });
-                });
-        })->with(['creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'inspection.creator']);
+                ->orWhereBetween('report_submit_date', [$startDate, $endDate]);
+        })->with(['creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'inspection.creator'])
+          ->orderBy('created_at', 'desc');
 
         if ($selectedBranch) {
             $baseWorksQuery->where('bank_branch', $selectedBranch);
@@ -228,12 +231,21 @@ class DailyReportController extends Controller
         // Helper lambda for date range check
         $inRange = function ($dateToCheck) use ($startDate, $endDate) {
             if (!$dateToCheck) return false;
-            return $dateToCheck->gte($startDate) && $dateToCheck->lte($endDate);
+            $d = $dateToCheck instanceof Carbon ? $dateToCheck : Carbon::parse($dateToCheck);
+            return $d->gte($startDate) && $d->lte($endDate);
+        };
+
+        $isDeliveredDate = function ($work) use ($inRange) {
+            if ($work->delivery_status !== 'Delivery Done') return false;
+            if ($work->report_submit_date && $inRange($work->report_submit_date)) return true;
+            if ($work->checking_ended_at && $inRange($work->checking_ended_at)) return true;
+            if ($work->created_at && $inRange($work->created_at)) return true;
+            return false;
         };
 
         // Apply Status Filter in collection if specified
         if ($selectedStatus) {
-            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedStatus, $inRange) {
+            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedStatus, $inRange, $isDeliveredDate) {
                 switch ($selectedStatus) {
                     case 'Positive': return $work->result === 'Positive';
                     case 'Negative': return $work->result === 'Negative';
@@ -243,7 +255,7 @@ class DailyReportController extends Controller
                     case 'Surveyed': return $work->inspection && $inRange($work->inspection->created_at);
                     case 'Reported': return $inRange($work->reporting_ended_at);
                     case 'Checked': return $inRange($work->checking_ended_at);
-                    case 'Delivered': return $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
+                    case 'Delivered': return $isDeliveredDate($work);
                     default: return true;
                 }
             })->values();
@@ -251,7 +263,7 @@ class DailyReportController extends Controller
 
         // Apply Role Filter in collection if specified
         if ($selectedRole) {
-            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedRole, $inRange) {
+            $allTouchedWorks = $allTouchedWorks->filter(function ($work) use ($selectedRole, $inRange, $isDeliveredDate) {
                 switch ($selectedRole) {
                     case 'In-Charge':
                         return $inRange($work->created_at) && $work->created_by;
@@ -262,7 +274,7 @@ class DailyReportController extends Controller
                     case 'Checker':
                         return $inRange($work->checking_ended_at) && $work->assignee_checker;
                     case 'Delivery Person':
-                        return $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at) && $work->assignee_delivery;
+                        return $isDeliveredDate($work) && $work->assignee_delivery;
                     default:
                         return true;
                 }
@@ -325,7 +337,7 @@ class DailyReportController extends Controller
             $isSurveyedInRange = $work->inspection && $inRange($work->inspection->created_at);
             $isReportedInRange = $inRange($work->reporting_ended_at);
             $isCheckedInRange = $inRange($work->checking_ended_at);
-            $isDeliveredInRange = $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
+            $isDeliveredInRange = $isDeliveredDate($work);
 
             if ($isCreatedInRange) $branchSegmentation[$branchId]['created']++;
             if ($isSurveyedInRange) $branchSegmentation[$branchId]['surveyed']++;
@@ -555,7 +567,7 @@ class DailyReportController extends Controller
             }
 
             // 5) Delivery Person
-            $isDeliveredInRange = $work->delivery_status === 'Delivery Done' && $inRange($work->updated_at);
+            $isDeliveredInRange = $isDeliveredDate($work);
             if ($isDeliveredInRange && $work->deliveryPerson) {
                 $u = $work->deliveryPerson;
                 if (!isset($roleWorkMatrix['Delivery Person'][$u->id])) {
@@ -577,7 +589,7 @@ class DailyReportController extends Controller
                     'branch' => $branchName,
                     'status' => $work->status,
                     'result' => $work->result,
-                    'time' => $work->updated_at->format('M j, h:i A'),
+                    'time' => $work->report_submit_date ? Carbon::parse($work->report_submit_date)->format('M j') : ($work->checking_ended_at ? $work->checking_ended_at->format('M j, h:i A') : $work->created_at->format('M j, h:i A')),
                 ];
 
                 $userActivity[$u->id]['name'] = $u->name;
@@ -873,6 +885,7 @@ class DailyReportController extends Controller
             fputcsv($file, ["DETAILED WORK LOG"]);
             fputcsv($file, [
                 "Work ID",
+                "Created Date",
                 "Applicant",
                 "Bank Name",
                 "Bank Branch",
@@ -892,6 +905,7 @@ class DailyReportController extends Controller
             foreach ($detailedWorks as $work) {
                 fputcsv($file, [
                     $work->custom_id,
+                    $work->created_at ? $work->created_at->format('d/m/Y') : '-',
                     $work->name_of_applicant,
                     $work->bank_name ?? '-',
                     $work->bankBranch->name ?? ($work->bank_name ? $work->bank_name . ' (Direct)' : '-'),
@@ -982,7 +996,8 @@ class DailyReportController extends Controller
         } elseif ($selectedUserRole === 'Delivery Person') {
             $userWorksQuery->where('assignee_delivery', $selectedUserId)
                 ->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('updated_at', [$startDate, $endDate])
+                    $q->whereBetween('report_submit_date', [$startDate, $endDate])
+                      ->orWhereBetween('checking_ended_at', [$startDate, $endDate])
                       ->orWhereBetween('created_at', [$startDate, $endDate]);
                 });
         } elseif ($selectedUserRole === 'Accountant') {

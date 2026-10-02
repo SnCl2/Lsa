@@ -95,9 +95,10 @@
                     <tr>
                         <th class="text-center" style="width: 60px;">#</th>
                         <th>Project Name</th>
-                        <th class="text-center" style="width: 160px;">Project Type</th>
-                        <th class="text-right" style="width: 160px;">Project Rate</th>
-                        <th class="text-center" style="width: 200px;">Actions</th>
+                        <th class="text-center" style="width: 150px;">Project Type</th>
+                        <th class="text-right" style="width: 150px;">Project Rate</th>
+                        <th class="text-center" style="width: 150px;">Updated At</th>
+                        <th class="text-center" style="width: 180px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,6 +132,17 @@
                                     <span class="text-muted font-weight-normal">—</span>
                                 @endif
                             </td>
+                            <td class="text-center align-middle" title="{{ $projectName->updated_at ? \Carbon\Carbon::parse($projectName->updated_at)->diffForHumans() : '' }}">
+                                @if($projectName->updated_at)
+                                    <span class="text-dark font-weight-bold" style="font-size: 0.88rem;">
+                                        {{ \Carbon\Carbon::parse($projectName->updated_at)->format('d/m/Y') }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">{{ \Carbon\Carbon::parse($projectName->updated_at)->format('h:i A') }}</small>
+                                @else
+                                    <span class="text-muted font-weight-normal">—</span>
+                                @endif
+                            </td>
                             <td class="text-center align-middle">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <a href="{{ route('project-names.edit', $projectName->id) }}" 
@@ -152,7 +164,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
                                 @if(request('search') || request('type'))
                                     <p class="mb-2 font-weight-bold">No project names match your filter.</p>
