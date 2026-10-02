@@ -40,7 +40,14 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="bank_name">Bank Name</label>
-                <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ $work->bank_name }}">
+                <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ old('bank_name', $work->bank_name) }}" list="bank_name_list" autocomplete="off" placeholder="Type or select bank...">
+                <datalist id="bank_name_list">
+                    @if(isset($bankNames))
+                        @foreach($bankNames as $bn)
+                            <option value="{{ $bn->name }}">{{ $bn->name }}</option>
+                        @endforeach
+                    @endif
+                </datalist>
             </div>
             <div class="form-group col-md-6">
                 <label for="bank_branch">Bank Branch</label>

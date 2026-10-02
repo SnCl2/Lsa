@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Relative;
 use App\Models\LoanType;
 use App\Models\ProjectName;
+use App\Models\BankName;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -515,8 +516,9 @@ public function worksForBankBranch(Request $request)
 
         $loanTypes = LoanType::orderBy('name')->get();
         $projectNames = ProjectName::orderBy('name')->get();
+        $bankNames = BankName::orderBy('name')->get();
 
-        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames'));
+        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames', 'bankNames'));
     }
 
     public function store(Request $request)
@@ -653,9 +655,10 @@ public function worksForBankBranch(Request $request)
 
         $loanTypes = LoanType::orderBy('name')->get();
         $projectNames = ProjectName::orderBy('name')->get();
+        $bankNames = BankName::orderBy('name')->get();
 
         $work = Work::findOrFail($id);
-        return view('works.edit', compact('work', 'usersByRole', 'loanTypes', 'projectNames'));
+        return view('works.edit', compact('work', 'usersByRole', 'loanTypes', 'projectNames', 'bankNames'));
     }
 
 

@@ -204,6 +204,11 @@ class Work extends Model
         return $this->belongsTo(ProjectName::class, 'project_name', 'name');
     }
 
+    public function bank()
+    {
+        return $this->belongsTo(BankName::class, 'bank_name', 'name');
+    }
+
     /**
      * Get reporting duration in minutes (null if incomplete).
      */

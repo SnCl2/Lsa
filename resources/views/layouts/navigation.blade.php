@@ -62,6 +62,9 @@
                         <x-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
                             {{ __('Project Names') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('bank-names.index')" :active="request()->routeIs('bank-names.*')">
+                            {{ __('Bank Names') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('works.index')" :active="request()->routeIs('works.index')">
                             {{ __('Works') }}
                         </x-nav-link>
@@ -151,6 +154,10 @@
 
                 <x-responsive-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
                     {{ __('Project Names') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('bank-names.index')" :active="request()->routeIs('bank-names.*')">
+                    {{ __('Bank Names') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('role-wise.index')" :active="request()->routeIs('role-wise.*')">
