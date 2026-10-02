@@ -390,14 +390,12 @@
                 }
 
                 // Dynamic Project Type & Rate details
-                const projectData = {
-                    @foreach($projectNames as $pn)
-                        {{ json_encode($pn->name) }}: {
-                            type: {{ json_encode($pn->project_type ?? 'Normal') }},
-                            rate: {{ json_encode(!is_null($pn->project_rate) ? (float)$pn->project_rate : null) }}
-                        },
-                    @endforeach
-                };
+                const projectData = @json($projectNames->mapWithKeys(function ($pn) {
+                    return [$pn->name => [
+                        'type' => $pn->project_type ?? 'Normal',
+                        'rate' => !is_null($pn->project_rate) ? (float)$pn->project_rate : null,
+                    ]];
+                }));
 
                 function updateProjectDetails() {
                     const projectInput = document.getElementById('project_name');
