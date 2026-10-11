@@ -22,4 +22,12 @@ class BankName extends Model
     {
         return $this->hasMany(Work::class, 'bank_name', 'name');
     }
+
+    /**
+     * Relationship to project names with this bank name
+     */
+    public function projectNames()
+    {
+        return $this->hasMany(ProjectName::class, 'bank_name', 'name');
+    }
 }

@@ -25,9 +25,36 @@ class ProjectName extends Model
         'name',
         'project_type',
         'project_rate',
+        'bank_name',
+        'bank_id',
+        'bank_branch',
     ];
 
     protected $casts = [
         'project_rate' => 'decimal:2',
     ];
+
+    /**
+     * Relationship to BankName model
+     */
+    public function bank()
+    {
+        return $this->belongsTo(BankName::class, 'bank_name', 'name');
+    }
+
+    /**
+     * Relationship to User model for Bank Branch
+     */
+    public function bankBranch()
+    {
+        return $this->belongsTo(User::class, 'bank_branch');
+    }
+
+    /**
+     * Relationship to works with this project name
+     */
+    public function works()
+    {
+        return $this->hasMany(Work::class, 'project_name', 'name');
+    }
 }

@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4" style="max-width: 700px;">
+<div class="container py-4" style="max-width: 750px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="h4 font-weight-bold text-dark mb-1">
                 <i class="fas fa-plus-circle text-primary mr-2"></i>Create Project Name
             </h2>
-            <p class="text-muted small mb-0">Add a project name to the suggestions directory.</p>
+            <p class="text-muted small mb-0">Add a project name to the suggestions directory and link it with a bank & branch.</p>
         </div>
         <a href="{{ route('project-names.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-arrow-left mr-1"></i> Back to List
@@ -41,6 +41,39 @@
                            style="border-color: #ced4da;"
                            required autofocus>
                     <small class="form-text text-muted">This name will be suggested when users type in the Project Name field during work entry.</small>
+                </div>
+
+                <!-- Bank and Branch Association -->
+                <div class="form-row mb-4">
+                    <div class="form-group col-md-6 mb-3 mb-md-0">
+                        <label class="font-weight-bold text-dark" for="bank_name">
+                            <i class="fas fa-university text-primary mr-1"></i> Bank Name
+                        </label>
+                        <select name="bank_name" id="bank_name" class="form-control form-control-lg" style="border-color: #ced4da;">
+                            <option value="">-- Select Bank (Optional) --</option>
+                            @foreach($bankNames as $bn)
+                                <option value="{{ $bn->name }}" {{ old('bank_name') === $bn->name ? 'selected' : '' }}>
+                                    {{ $bn->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Associate this project with a bank.</small>
+                    </div>
+
+                    <div class="form-group col-md-6 mb-0">
+                        <label class="font-weight-bold text-dark" for="bank_branch">
+                            <i class="fas fa-code-branch text-info mr-1"></i> Bank Branch
+                        </label>
+                        <select name="bank_branch" id="bank_branch" class="form-control form-control-lg" style="border-color: #ced4da;">
+                            <option value="">-- Select Branch (Optional) --</option>
+                            @foreach($bankBranches as $branch)
+                                <option value="{{ $branch->id }}" {{ (string)old('bank_branch') === (string)$branch->id ? 'selected' : '' }}>
+                                    {{ $branch->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Associate this project with a bank branch.</small>
+                    </div>
                 </div>
 
                 <div class="form-row mb-4">

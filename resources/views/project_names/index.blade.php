@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4" style="max-width: 1100px;">
+<div class="container py-4" style="max-width: 1200px;">
     <!-- Page Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
         <div>
             <h2 class="h3 font-weight-bold text-dark mb-1">
                 <i class="fas fa-building text-primary mr-2"></i>Project Names
             </h2>
-            <p class="text-muted mb-0 small">These project names appear as autocomplete suggestions when creating or editing works.</p>
+            <p class="text-muted mb-0 small">These project names appear as autocomplete suggestions when creating or editing works, linked with banks & branches.</p>
         </div>
         <div class="mt-3 mt-md-0">
             <a href="{{ route('project-names.create') }}" class="btn btn-primary px-4 py-2 font-weight-bold shadow-sm" style="border-radius: 8px;">
@@ -43,7 +43,7 @@
     <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px;">
         <div class="card-body p-3">
             <form method="GET" action="{{ route('project-names.index') }}" class="row align-items-center">
-                <div class="col-md-6 col-sm-12 mb-2 mb-md-0">
+                <div class="col-md-4 col-sm-12 mb-2 mb-md-0">
                     <div class="input-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text bg-light border-right-0" style="border-color: #ced4da;">
@@ -51,7 +51,7 @@
                             </span>
                         </div>
                         <input type="text" name="search" class="form-control border-left-0" style="border-color: #ced4da;"
-                               placeholder="Search project name..." 
+                               placeholder="Search project or bank..." 
                                value="{{ request('search') }}">
                     </div>
                 </div>
@@ -65,11 +65,23 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-12 d-flex">
+                <div class="col-md-3 col-sm-12 mb-2 mb-md-0">
+                    <select name="bank_name" class="form-control" style="border-color: #ced4da;" onchange="this.form.submit()">
+                        <option value="">All Banks</option>
+                        @if(isset($bankNames))
+                            @foreach($bankNames as $bn)
+                                <option value="{{ $bn->name }}" {{ request('bank_name') === $bn->name ? 'selected' : '' }}>
+                                    {{ $bn->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-12 d-flex">
                     <button type="submit" class="btn btn-primary btn-block mr-2 font-weight-bold">
                         <i class="fas fa-filter mr-1"></i> Filter
                     </button>
-                    @if(request('search') || request('type'))
+                    @if(request('search') || request('type') || request('bank_name') || request('bank_branch'))
                         <a href="{{ route('project-names.index') }}" class="btn btn-outline-secondary" title="Clear filter">
                             <i class="fas fa-times"></i>
                         </a>
@@ -93,12 +105,14 @@
             <table class="table table-hover table-striped mb-0">
                 <thead class="thead-light">
                     <tr>
-                        <th class="text-center" style="width: 60px;">#</th>
+                        <th class="text-center" style="width: 50px;">#</th>
                         <th>Project Name</th>
-                        <th class="text-center" style="width: 150px;">Project Type</th>
-                        <th class="text-right" style="width: 150px;">Project Rate</th>
-                        <th class="text-center" style="width: 150px;">Updated At</th>
-                        <th class="text-center" style="width: 180px;">Actions</th>
+                        <th style="min-width: 170px;">Bank / Branch</th>
+                        <th class="text-center" style="width: 130px;">Project Type</th>
+                        <th class="text-right" style="width: 130px;">Project Rate</th>
+                        <th class="text-center" style="width: 140px;">Linked Works</th>
+                        <th class="text-center" style="width: 140px;">Updated At</th>
+                        <th class="text-center" style="width: 160px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -109,6 +123,20 @@
                             </td>
                             <td class="align-middle font-weight-bold text-dark" style="font-size: 1rem;">
                                 {{ $projectName->name }}
+                            </td>
+                            <td class="align-middle">
+                                @if($projectName->bank_name)
+                                    <div class="font-weight-bold text-dark" style="font-size: 0.92rem;">
+                                        <i class="fas fa-university text-primary mr-1" style="font-size: 0.85rem;"></i>{{ $projectName->bank_name }}
+                                    </div>
+                                @endif
+                                <div class="{{ $projectName->bank_name ? 'small text-muted mt-1' : 'text-muted' }}">
+                                    @if($projectName->bankBranch)
+                                        <i class="fas fa-code-branch text-info mr-1" style="font-size: 0.75rem;"></i>{{ $projectName->bankBranch->name }}
+                                    @else
+                                        {{ $projectName->bank_name ? 'No branch' : '—' }}
+                                    @endif
+                                </div>
                             </td>
                             <td class="text-center align-middle">
                                 @if($projectName->project_type === 'Approved')
@@ -130,6 +158,23 @@
                                     ₹ {{ number_format($projectName->project_rate, 2) }}
                                 @else
                                     <span class="text-muted font-weight-normal">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center align-middle">
+                                @if($projectName->works_count > 0)
+                                    <a href="{{ route('works.index', ['project_name' => $projectName->name]) }}" 
+                                       class="badge badge-info px-2 py-1 font-weight-bold text-white text-decoration-none shadow-sm project-work-link" 
+                                       style="font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" 
+                                       title="View {{ number_format($projectName->works_count) }} {{ Str::plural('work', $projectName->works_count) }} for {{ $projectName->name }}">
+                                        <i class="fas fa-file-alt mr-1"></i>{{ number_format($projectName->works_count) }}
+                                        <i class="fas fa-external-link-alt ml-1" style="font-size: 0.68rem; opacity: 0.85;"></i>
+                                    </a>
+                                @else
+                                    <a href="{{ route('works.index', ['project_name' => $projectName->name]) }}" 
+                                       class="text-muted font-weight-normal text-decoration-none" 
+                                       title="0 works linked. Click to view works page">
+                                        —
+                                    </a>
                                 @endif
                             </td>
                             <td class="text-center align-middle" title="{{ $projectName->updated_at ? \Carbon\Carbon::parse($projectName->updated_at)->diffForHumans() : '' }}">
@@ -164,9 +209,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="fas fa-folder-open fa-3x mb-3 text-secondary d-block"></i>
-                                @if(request('search') || request('type'))
+                                @if(request('search') || request('type') || request('bank_name'))
                                     <p class="mb-2 font-weight-bold">No project names match your filter.</p>
                                     <a href="{{ route('project-names.index') }}" class="btn btn-sm btn-outline-primary">Clear Filter</a>
                                 @else

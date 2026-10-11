@@ -101,6 +101,11 @@ class WorkController extends Controller
             $query->where('bank_name', $request->bank_name);
         }
 
+        // Filter by Project Name
+        if ($request->filled('project_name')) {
+            $query->where('project_name', $request->project_name);
+        }
+
         // Filter by Work Type
         if ($request->filled('work_type')) {
             $query->where('work_type', $request->work_type);
@@ -198,8 +203,9 @@ class WorkController extends Controller
         $pendingPrintCount = Work::whereNotNull('checking_ended_at')->where('is_printed', 0)->count();
         $holdCount = Work::where('is_hold', 1)->count();
         $bankNames = BankName::orderBy('name')->pluck('name');
+        $projectNames = ProjectName::orderBy('name')->pluck('name');
     
-        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'bankNames'));
+        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'bankNames', 'projectNames'));
     }
 
     private function downloadCsvResponse($works, $filename = 'works_export.csv')

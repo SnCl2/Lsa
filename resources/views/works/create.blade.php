@@ -482,6 +482,8 @@
         return [$pn->name => [
             'type' => $pn->project_type ?? 'Normal',
             'rate' => !is_null($pn->project_rate) ? (float)$pn->project_rate : null,
+            'bank_name' => $pn->bank_name,
+            'bank_branch' => $pn->bank_branch,
         ]];
     }));
 
@@ -516,6 +518,16 @@
             } else {
                 rateBadge.className = 'text-muted font-italic font-weight-normal';
                 rateBadge.textContent = 'Not specified';
+            }
+
+            // Auto-fill linked bank and branch if empty
+            const bankInput = document.getElementById('bank_name');
+            const branchSelect = document.getElementById('bank_branch');
+            if (item.bank_name && bankInput && !bankInput.value) {
+                bankInput.value = item.bank_name;
+            }
+            if (item.bank_branch && branchSelect && !branchSelect.value) {
+                branchSelect.value = item.bank_branch;
             }
         } else {
             infoBox.style.display = 'none';
