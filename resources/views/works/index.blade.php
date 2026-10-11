@@ -37,6 +37,26 @@
         </div>
     </div>
     
+    @if(request('bank_name'))
+    <div class="alert alert-info alert-dismissible fade show shadow-sm border-0 d-flex justify-content-between align-items-center mb-4" role="alert" style="border-radius: 8px;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-university fa-lg mr-2 text-primary"></i>
+            <div>
+                Filtered by Bank: <strong class="text-dark">{{ request('bank_name') }}</strong>
+                <span class="badge badge-primary ml-2 font-weight-bold">{{ $works->total() }} {{ Str::plural('work', $works->total()) }} found</span>
+            </div>
+        </div>
+        <div>
+            @php
+                $currentRouteName = request()->route()?->getName() ?? 'works.index';
+            @endphp
+            <a href="{{ route($currentRouteName, request()->except('bank_name', 'page')) }}" class="btn btn-sm btn-outline-dark bg-white font-weight-bold shadow-sm">
+                <i class="fas fa-times mr-1 text-danger"></i> Clear Bank Filter
+            </a>
+        </div>
+    </div>
+    @endif
+    
     @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
     <!-- Status Navigation Buttons -->
     <div class="card mb-4 shadow-sm">
@@ -49,6 +69,8 @@
                     $currentStatus = request('status');
                     $currentResult = request('result');
                     $currentIsHold = request('is_hold');
+                    $currentBankName = request('bank_name');
+                    $bankParam = $currentBankName ? ['bank_name' => $currentBankName] : [];
                     $currentRouteName = request()->route()?->getName() ?? 'works.index';
                     // Determine the correct route for filtering based on current route
                     $statusRoute = 'works.index'; // default
@@ -68,53 +90,53 @@
                         $statusRoute = 'works.hold';
                     }
                 @endphp
-                <a href="{{ route($statusRoute) }}" 
+                <a href="{{ route($statusRoute, $bankParam) }}" 
                    class="btn btn-sm {{ !$currentStatus && !$currentResult && $currentIsHold === null && !request()->routeIs('works.hold') ? 'btn-primary' : 'btn-outline-secondary' }}">
                     <i class="fas fa-list"></i> All Works
                     <span class="badge badge-light ml-2">{{ $works->total() }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'New File']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'New File'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'New File' ? 'btn-primary' : 'btn-outline-primary' }}">
                     <i class="fas fa-file"></i> New File
                     <span class="badge badge-light ml-2">{{ $statusCounts['New File'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Surveying']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Surveying'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Surveying' ? 'btn-info' : 'btn-outline-info' }}">
                     <i class="fas fa-search"></i> Surveying
                     <span class="badge badge-light ml-2">{{ $statusCounts['Surveying'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Reporting']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Reporting'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Reporting' ? 'btn-warning' : 'btn-outline-warning' }}">
                     <i class="fas fa-file-alt"></i> Reporting
                     <span class="badge badge-light ml-2">{{ $statusCounts['Reporting'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Checking']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Checking'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Checking' ? 'btn-secondary' : 'btn-outline-secondary' }}">
                     <i class="fas fa-check-circle"></i> Checking
                     <span class="badge badge-light ml-2">{{ $statusCounts['Checking'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['is_printed' => '0']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['is_printed' => '0'])) }}" 
                    class="btn btn-sm {{ request('is_printed') === '0' && !$currentStatus && !$currentResult ? 'btn-warning' : 'btn-outline-warning' }}">
                     <i class="fas fa-clock"></i> Pending Printing
                     <span class="badge badge-light ml-2">{{ $pendingPrintCount ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Printing']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Printing'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Printing' ? 'btn-warning' : 'btn-outline-warning' }}">
                     <i class="fas fa-print"></i> Printing
                     <span class="badge badge-light ml-2">{{ $statusCounts['Printing'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Completed']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Completed'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Completed' ? 'btn-success' : 'btn-outline-success' }}">
                     <i class="fas fa-check-double"></i> Completed
                     <span class="badge badge-light ml-2">{{ $statusCounts['Completed'] ?? 0 }}</span>
                 </a>
-                <a href="{{ route('works.hold') }}" 
+                <a href="{{ route('works.hold', $bankParam) }}" 
                    class="btn btn-sm {{ request()->routeIs('works.hold') || $currentIsHold === '1' ? 'btn-danger' : 'btn-outline-danger' }}"
                    title="{{ $isSuperOrKkda ? 'View all works on hold' : 'View all hold works where you are assigned' }}">
                     <i class="fas fa-pause"></i> {{ $isSuperOrKkda ? 'All Hold Works' : 'My Hold Works' }}
                     <span class="badge badge-light ml-2">{{ $holdBadgeCount }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['status' => 'Canceled']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['status' => 'Canceled'])) }}" 
                    class="btn btn-sm {{ $currentStatus == 'Canceled' ? 'btn-dark' : 'btn-outline-dark' }}">
                     <i class="fas fa-times-circle"></i> Canceled
                     <span class="badge badge-light ml-2">{{ $statusCounts['Canceled'] ?? 0 }}</span>
@@ -122,17 +144,17 @@
                 
                 <!-- Result Filter Buttons -->
                 <span style="border-left: 2px solid #dee2e6; height: 30px; margin: 0 8px; display: inline-block; vertical-align: middle;"></span>
-                <a href="{{ route($statusRoute, ['result' => 'Positive']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['result' => 'Positive'])) }}" 
                    class="btn btn-sm {{ $currentResult == 'Positive' ? 'btn-success' : 'btn-outline-success' }}">
                     <i class="fas fa-check-circle"></i> Positive
                     <span class="badge badge-light ml-2">{{ ($resultCounts['Positive'] ?? 0) + ($resultCounts['+ve'] ?? 0) }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['result' => 'Negative']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['result' => 'Negative'])) }}" 
                    class="btn btn-sm {{ $currentResult == 'Negative' ? 'btn-danger' : 'btn-outline-danger' }}">
                     <i class="fas fa-times-circle"></i> Negative
                     <span class="badge badge-light ml-2">{{ ($resultCounts['Negative'] ?? 0) + ($resultCounts['-ve'] ?? 0) }}</span>
                 </a>
-                <a href="{{ route($statusRoute, ['result' => 'Return']) }}" 
+                <a href="{{ route($statusRoute, array_merge($bankParam, ['result' => 'Return'])) }}" 
                    class="btn btn-sm {{ $currentResult == 'Return' ? 'btn-warning' : 'btn-outline-warning' }}">
                     <i class="fas fa-undo"></i> Return
                     <span class="badge badge-light ml-2">{{ $resultCounts['Return'] ?? 0 }}</span>
@@ -231,6 +253,22 @@
                             <option value="">All Bank Branches</option>
                             @foreach($usersByRole['Bank Branch'] as $id => $name)
                                  <option value="{{ $id }}" {{ (string)request('bank_branch') === (string)$id ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Bank Name Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-landmark text-primary"></i> Bank Name
+                        </label>
+                        <select class="form-control" id="bank_name" name="bank_name">
+                            <option value="">All Bank Names</option>
+                            @php
+                                $bNamesList = $bankNames ?? \App\Models\BankName::orderBy('name')->pluck('name');
+                            @endphp
+                            @foreach($bNamesList as $bName)
+                                 <option value="{{ $bName }}" {{ request('bank_name') === $bName ? 'selected' : '' }}>{{ $bName }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -389,7 +427,7 @@
                         <th>ID / Custom ID</th>
                         <th>Contact Name</th>
                         <th>Contact Number</th>
-                        <th>Bank Branch</th>
+                        <th>Bank / Branch</th>
                         <th>Loan Amount</th>
                         <th>Valuation Values</th>
                         <th>Work Type</th>
@@ -455,7 +493,16 @@
                             @endif
                         </td>
                         <td>{{ $work->number_of_applicants }}</td>
-                        <td>{{ $work->bankBranch?->name ?? 'N/A' }}</td>
+                        <td>
+                            @if($work->bank_name)
+                                <div class="font-weight-bold text-dark">
+                                    <i class="fas fa-university text-primary mr-1" style="font-size: 0.85rem;"></i>{{ $work->bank_name }}
+                                </div>
+                            @endif
+                            <div class="{{ $work->bank_name ? 'small text-muted' : '' }}">
+                                {{ $work->bankBranch?->name ?? ($work->bank_name ? 'No branch assigned' : 'N/A') }}
+                            </div>
+                        </td>
                         <td>{{ $work->loan_amount_requested }}</td>
                         <td>
                             <div class="small"><strong>FMV:</strong> {{ $work->actual_value !== null ? number_format($work->actual_value, 2) : '—' }}</div>

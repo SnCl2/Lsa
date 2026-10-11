@@ -59,6 +59,7 @@ class AccountController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name_of_applicant', 'like', "%{$search}%")
                     ->orWhere('project_name', 'like', "%{$search}%")
+                    ->orWhere('bank_name', 'like', "%{$search}%")
                     ->orWhere('custom_id', 'like', "%{$search}%")
                     ->orWhere('invoice_number', 'like', "%{$search}%");
             });
@@ -66,6 +67,10 @@ class AccountController extends Controller
 
         if ($request->filled('bank_branch')) {
             $query->where('bank_branch', $request->bank_branch);
+        }
+
+        if ($request->filled('bank_name')) {
+            $query->where('bank_name', $request->bank_name);
         }
 
         if ($request->filled('work_type')) {

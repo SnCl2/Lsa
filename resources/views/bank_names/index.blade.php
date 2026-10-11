@@ -101,11 +101,19 @@
                             </td>
                             <td class="text-center align-middle">
                                 @if($bankName->works_count > 0)
-                                    <span class="badge badge-info px-2 py-1 font-weight-bold" style="font-size: 0.82rem;">
+                                    <a href="{{ route('works.index', ['bank_name' => $bankName->name]) }}" 
+                                       class="badge badge-info px-2 py-1 font-weight-bold text-white text-decoration-none shadow-sm bank-work-link" 
+                                       style="font-size: 0.85rem; cursor: pointer; transition: all 0.2s;" 
+                                       title="View {{ number_format($bankName->works_count) }} {{ Str::plural('work', $bankName->works_count) }} for {{ $bankName->name }}">
                                         <i class="fas fa-file-alt mr-1"></i>{{ number_format($bankName->works_count) }}
-                                    </span>
+                                        <i class="fas fa-external-link-alt ml-1" style="font-size: 0.68rem; opacity: 0.85;"></i>
+                                    </a>
                                 @else
-                                    <span class="text-muted font-weight-normal">—</span>
+                                    <a href="{{ route('works.index', ['bank_name' => $bankName->name]) }}" 
+                                       class="text-muted font-weight-normal text-decoration-none" 
+                                       title="0 works linked. Click to view works page">
+                                        —
+                                    </a>
                                 @endif
                             </td>
                             <td class="text-center align-middle" title="{{ $bankName->updated_at ? \Carbon\Carbon::parse($bankName->updated_at)->diffForHumans() : '' }}">

@@ -66,6 +66,7 @@ class WorkController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name_of_applicant', 'like', "%{$search}%")
                   ->orWhere('project_name', 'like', "%{$search}%")
+                  ->orWhere('bank_name', 'like', "%{$search}%")
                   ->orWhere('source', 'like', "%{$search}%")
                   ->orWhere('pin_code', 'like', "%{$search}%")
                   ->orWhere('status', 'like', "%{$search}%")
@@ -93,6 +94,11 @@ class WorkController extends Controller
         // Filter by Bank Branch
         if ($request->filled('bank_branch')) {
             $query->where('bank_branch', (int)$request->bank_branch);
+        }
+
+        // Filter by Bank Name
+        if ($request->filled('bank_name')) {
+            $query->where('bank_name', $request->bank_name);
         }
 
         // Filter by Work Type
@@ -191,8 +197,9 @@ class WorkController extends Controller
         // Count works pending printing
         $pendingPrintCount = Work::whereNotNull('checking_ended_at')->where('is_printed', 0)->count();
         $holdCount = Work::where('is_hold', 1)->count();
+        $bankNames = BankName::orderBy('name')->pluck('name');
     
-        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount'));
+        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'bankNames'));
     }
 
     private function downloadCsvResponse($works, $filename = 'works_export.csv')
