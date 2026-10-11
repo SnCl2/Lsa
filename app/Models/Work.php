@@ -209,6 +209,12 @@ class Work extends Model
         return $this->belongsTo(BankName::class, 'bank_name', 'name');
     }
 
+    public function sourceModel()
+    {
+        return $this->belongsTo(Source::class, 'source', 'name');
+    }
+
+
     /**
      * Get reporting duration in minutes (null if incomplete).
      */

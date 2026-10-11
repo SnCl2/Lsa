@@ -60,7 +60,14 @@
                         </div>
                         <div class="form-group col-md-6">
                             <label for="source">Source</label>
-                            <input type="text" class="form-control" id="source" name="source" value="{{ old('source') }}" required>
+                            <input type="text" class="form-control" id="source" name="source" value="{{ old('source') }}" list="source_list" autocomplete="off" placeholder="Type or select source..." required>
+                            <datalist id="source_list">
+                                @if(isset($sources))
+                                    @foreach($sources as $s)
+                                        <option value="{{ $s->name }}">{{ $s->name }}</option>
+                                    @endforeach
+                                @endif
+                            </datalist>
                         </div>
                     </div>
                     <div class="form-row">

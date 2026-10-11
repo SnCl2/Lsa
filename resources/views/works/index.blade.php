@@ -76,6 +76,26 @@
         </div>
     </div>
     @endif
+
+    @if(request('source'))
+    <div class="alert alert-info alert-dismissible fade show shadow-sm border-0 d-flex justify-content-between align-items-center mb-4" role="alert" style="border-radius: 8px;">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-share-alt fa-lg mr-2 text-primary"></i>
+            <div>
+                Filtered by Source: <strong class="text-dark">{{ request('source') }}</strong>
+                <span class="badge badge-primary ml-2 font-weight-bold">{{ $works->total() }} {{ Str::plural('work', $works->total()) }} found</span>
+            </div>
+        </div>
+        <div>
+            @php
+                $currentRouteName = request()->route()?->getName() ?? 'works.index';
+            @endphp
+            <a href="{{ route($currentRouteName, request()->except('source', 'page')) }}" class="btn btn-sm btn-outline-dark bg-white font-weight-bold shadow-sm">
+                <i class="fas fa-times mr-1 text-danger"></i> Clear Source Filter
+            </a>
+        </div>
+    </div>
+    @endif
     
     @if(!auth()->user()->roles->contains('name', 'Bank Branch'))
     <!-- Status Navigation Buttons -->
@@ -405,9 +425,17 @@
                     <!-- Source Filter -->
                     <div class="col-md-3 mb-3">
                         <label class="form-label">
-                            <i class="fas fa-share-square text-secondary"></i> Source
+                            <i class="fas fa-share-alt text-secondary"></i> Source
                         </label>
-                        <input type="text" class="form-control" name="source" placeholder="Search by Source" value="{{ request('source') }}">
+                        <input type="text" class="form-control" name="source" id="source" list="source_filter_list" placeholder="Search by Source" value="{{ request('source') }}" autocomplete="off">
+                        <datalist id="source_filter_list">
+                            @php
+                                $sourcesFilterList = $sources ?? \App\Models\Source::orderBy('name')->pluck('name');
+                            @endphp
+                            @foreach($sourcesFilterList as $sName)
+                                <option value="{{ $sName }}">{{ $sName }}</option>
+                            @endforeach
+                        </datalist>
                     </div>
 
                     <!-- Created Date From -->
@@ -531,6 +559,13 @@
                                     <span class="badge badge-light border text-secondary" title="Project Name">
                                         <i class="fas fa-building text-info mr-1"></i>{{ $work->project_name }}
                                     </span>
+                                </div>
+                            @endif
+                            @if($work->source)
+                                <div class="mt-1">
+                                    <a href="{{ route('works.index', ['source' => $work->source]) }}" class="badge badge-light border text-secondary text-decoration-none" title="Source: {{ $work->source }}">
+                                        <i class="fas fa-share-alt text-primary mr-1"></i>{{ $work->source }}
+                                    </a>
                                 </div>
                             @endif
                             @if($work->remarks)

@@ -9,6 +9,7 @@ use App\Models\Relative;
 use App\Models\LoanType;
 use App\Models\ProjectName;
 use App\Models\BankName;
+use App\Models\Source;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -133,7 +134,7 @@ class WorkController extends Controller
         
         // Filter by Source
         if ($request->filled('source')) {
-            $query->where('source', 'like', "%{$request->source}%");
+            $query->where('source', $request->source);
         }
 
         // Filter by Result
@@ -204,8 +205,9 @@ class WorkController extends Controller
         $holdCount = Work::where('is_hold', 1)->count();
         $bankNames = BankName::orderBy('name')->pluck('name');
         $projectNames = ProjectName::orderBy('name')->pluck('name');
+        $sources = Source::orderBy('name')->pluck('name');
     
-        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'bankNames', 'projectNames'));
+        return view('works.index', compact('works', 'usersByRole', 'statusCounts', 'resultCounts', 'pendingPrintCount', 'holdCount', 'bankNames', 'projectNames', 'sources'));
     }
 
     private function downloadCsvResponse($works, $filename = 'works_export.csv')
@@ -530,8 +532,9 @@ public function worksForBankBranch(Request $request)
         $loanTypes = LoanType::orderBy('name')->get();
         $projectNames = ProjectName::orderBy('name')->get();
         $bankNames = BankName::orderBy('name')->get();
+        $sources = Source::orderBy('name')->get();
 
-        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames', 'bankNames'));
+        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames', 'bankNames', 'sources'));
     }
 
     public function store(Request $request)
@@ -669,9 +672,10 @@ public function worksForBankBranch(Request $request)
         $loanTypes = LoanType::orderBy('name')->get();
         $projectNames = ProjectName::orderBy('name')->get();
         $bankNames = BankName::orderBy('name')->get();
+        $sources = Source::orderBy('name')->get();
 
         $work = Work::findOrFail($id);
-        return view('works.edit', compact('work', 'usersByRole', 'loanTypes', 'projectNames', 'bankNames'));
+        return view('works.edit', compact('work', 'usersByRole', 'loanTypes', 'projectNames', 'bankNames', 'sources'));
     }
 
 
