@@ -50,24 +50,48 @@
                     </x-nav-link>
 
                     @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
-                            {{ __('Manage Users') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
-                            {{ __('Manage Roles') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('loan-types.index')" :active="request()->routeIs('loan-types.*')">
-                            {{ __('Loan Types') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
-                            {{ __('Project Names') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('bank-names.index')" :active="request()->routeIs('bank-names.*')">
-                            {{ __('Bank Names') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('sources.index')" :active="request()->routeIs('sources.*')">
-                            {{ __('Sources') }}
-                        </x-nav-link>
+                        @php
+                            $isMasterActive = request()->routeIs('loan-types.*') || 
+                                              request()->routeIs('project-names.*') || 
+                                              request()->routeIs('bank-names.*') || 
+                                              request()->routeIs('sources.*') || 
+                                              request()->routeIs('roles.*') || 
+                                              request()->routeIs('users.*');
+                        @endphp
+                        <div class="inline-flex items-center">
+                            <x-dropdown align="left" width="w-56">
+                                <x-slot name="trigger">
+                                    <button type="button" class="inline-flex items-center px-1 pt-1 border-b-2 {{ $isMasterActive ? 'border-indigo-400 dark:border-indigo-600 text-gray-900 dark:text-gray-100 font-semibold' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700' }} text-sm font-medium leading-5 focus:outline-none transition duration-150 ease-in-out h-16">
+                                        <span>{{ __('Master') }}</span>
+                                        <svg class="ms-1.5 h-4 w-4 fill-current opacity-75" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </x-slot>
+
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('loan-types.index')">
+                                        <i class="fas fa-file-invoice-dollar mr-2 text-primary opacity-75 w-4 text-center"></i> {{ __('Loan Types') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('project-names.index')">
+                                        <i class="fas fa-building mr-2 text-info opacity-75 w-4 text-center"></i> {{ __('Project Names') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('bank-names.index')">
+                                        <i class="fas fa-university mr-2 text-primary opacity-75 w-4 text-center"></i> {{ __('Bank Names') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('sources.index')">
+                                        <i class="fas fa-share-alt mr-2 text-secondary opacity-75 w-4 text-center"></i> {{ __('Sources') }}
+                                    </x-dropdown-link>
+                                    <div class="border-t border-gray-100 dark:border-gray-600 my-1"></div>
+                                    <x-dropdown-link :href="route('roles.index')">
+                                        <i class="fas fa-user-shield mr-2 text-warning opacity-75 w-4 text-center"></i> {{ __('Manage Roles') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('users.index')">
+                                        <i class="fas fa-users-cog mr-2 text-success opacity-75 w-4 text-center"></i> {{ __('Manage Users') }}
+                                    </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
                         <x-nav-link :href="route('works.index')" :active="request()->routeIs('works.index')">
                             {{ __('Works') }}
                         </x-nav-link>
@@ -143,28 +167,49 @@
             </x-responsive-nav-link>
 
             @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
-                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
-                    {{ __('Manage Users') }}
-                </x-responsive-nav-link>
+                @php
+                    $isMasterActive = request()->routeIs('loan-types.*') || 
+                                      request()->routeIs('project-names.*') || 
+                                      request()->routeIs('bank-names.*') || 
+                                      request()->routeIs('sources.*') || 
+                                      request()->routeIs('roles.*') || 
+                                      request()->routeIs('users.*');
+                @endphp
+                <!-- Master Accordion in Mobile Menu -->
+                <div x-data="{ masterOpen: {{ $isMasterActive ? 'true' : 'false' }} }">
+                    <button type="button" @click="masterOpen = !masterOpen" class="w-full flex items-center justify-between ps-3 pe-4 py-2 border-l-4 {{ $isMasterActive ? 'border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50 font-medium' : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600' }} text-base leading-5 focus:outline-none transition duration-150 ease-in-out">
+                        <span class="flex items-center font-medium">
+                            <i class="fas fa-layer-group mr-2 opacity-75"></i>
+                            {{ __('Master') }}
+                        </span>
+                        <svg class="h-4 w-4 transform transition-transform duration-200" :class="{ 'rotate-180': masterOpen }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="masterOpen" class="ps-4 space-y-1 bg-gray-50 dark:bg-gray-900/40 py-1">
+                        <x-responsive-nav-link :href="route('loan-types.index')" :active="request()->routeIs('loan-types.*')">
+                            <i class="fas fa-file-invoice-dollar mr-2 text-primary opacity-75"></i> {{ __('Loan Types') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
+                            <i class="fas fa-building mr-2 text-info opacity-75"></i> {{ __('Project Names') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('bank-names.index')" :active="request()->routeIs('bank-names.*')">
+                            <i class="fas fa-university mr-2 text-primary opacity-75"></i> {{ __('Bank Names') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('sources.index')" :active="request()->routeIs('sources.*')">
+                            <i class="fas fa-share-alt mr-2 text-secondary opacity-75"></i> {{ __('Sources') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
+                            <i class="fas fa-user-shield mr-2 text-warning opacity-75"></i> {{ __('Manage Roles') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            <i class="fas fa-users-cog mr-2 text-success opacity-75"></i> {{ __('Manage Users') }}
+                        </x-responsive-nav-link>
+                    </div>
+                </div>
 
-                <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
-                {{ __('Manage Roles') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('loan-types.index')" :active="request()->routeIs('loan-types.*')">
-                    {{ __('Loan Types') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('project-names.index')" :active="request()->routeIs('project-names.*')">
-                    {{ __('Project Names') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('bank-names.index')" :active="request()->routeIs('bank-names.*')">
-                    {{ __('Bank Names') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('sources.index')" :active="request()->routeIs('sources.*')">
-                    {{ __('Sources') }}
+                <x-responsive-nav-link :href="route('works.index')" :active="request()->routeIs('works.index')">
+                    {{ __('Works') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('role-wise.index')" :active="request()->routeIs('role-wise.*')">
