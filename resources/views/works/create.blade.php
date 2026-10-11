@@ -478,14 +478,17 @@
     });
 
     // Dynamic Project Type & Rate details
-    const projectData = @json($projectNames->mapWithKeys(function ($pn) {
-        return [$pn->name => [
-            'type' => $pn->project_type ?? 'Normal',
-            'rate' => !is_null($pn->project_rate) ? (float)$pn->project_rate : null,
-            'bank_name' => $pn->bank_name,
-            'bank_branch' => $pn->bank_branch,
-        ]];
-    }));
+    @php
+        $projectDataMap = isset($projectNames) ? $projectNames->mapWithKeys(function ($pn) {
+            return [$pn->name => [
+                'type' => $pn->project_type ?? 'Normal',
+                'rate' => !is_null($pn->project_rate) ? (float)$pn->project_rate : null,
+                'bank_name' => $pn->bank_name,
+                'bank_branch' => $pn->bank_branch,
+            ]];
+        }) : [];
+    @endphp
+    const projectData = @json($projectDataMap);
 
     function updateProjectDetails() {
         const projectInput = document.getElementById('project_name');
