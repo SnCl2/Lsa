@@ -59,15 +59,15 @@
                             <input type="text" class="form-control" id="rmls_number" name="rmls_number" value="{{ old('rmls_number') }}" placeholder="Enter RMLS Number">
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="source">Source</label>
-                            <input type="text" class="form-control" id="source" name="source" value="{{ old('source') }}" list="source_list" autocomplete="off" placeholder="Type or select source..." required>
-                            <datalist id="source_list">
+                            <label for="source">Source <span class="text-danger">*</span></label>
+                            <select class="form-control" id="source" name="source" required>
+                                <option value="">Select Source</option>
                                 @if(isset($sources))
                                     @foreach($sources as $s)
-                                        <option value="{{ $s->name }}">{{ $s->name }}</option>
+                                        <option value="{{ $s->name }}" {{ old('source') == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
                                     @endforeach
                                 @endif
-                            </datalist>
+                            </select>
                         </div>
                     </div>
                     <div class="form-row">
@@ -83,14 +83,14 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="bank_name">Bank Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ old('bank_name') }}" list="bank_name_list" autocomplete="off" placeholder="Type or select bank..." required>
-                            <datalist id="bank_name_list">
+                            <select class="form-control" id="bank_name" name="bank_name" required>
+                                <option value="">Select Bank Name</option>
                                 @if(isset($bankNames))
                                     @foreach($bankNames as $bn)
-                                        <option value="{{ $bn->name }}">{{ $bn->name }}</option>
+                                        <option value="{{ $bn->name }}" {{ old('bank_name') == $bn->name ? 'selected' : '' }}>{{ $bn->name }}</option>
                                     @endforeach
                                 @endif
-                            </datalist>
+                            </select>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="bank_branch">Bank Branch</label>
@@ -123,12 +123,14 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="project_name">Project Name</label>
-                            <input type="text" class="form-control" id="project_name" name="project_name" value="{{ old('project_name') }}" list="project_name_list" autocomplete="off" placeholder="Type or select project...">
-                            <datalist id="project_name_list">
-                                @foreach($projectNames as $pn)
-                                    <option value="{{ $pn->name }}">{{ $pn->project_type ?? 'Normal' }} | Rate: {{ !is_null($pn->project_rate) ? '₹' . number_format($pn->project_rate, 2) : 'N/A' }}</option>
-                                @endforeach
-                            </datalist>
+                            <select class="form-control" id="project_name" name="project_name">
+                                <option value="">Select Project Name</option>
+                                @if(isset($projectNames))
+                                    @foreach($projectNames as $pn)
+                                        <option value="{{ $pn->name }}" {{ old('project_name') == $pn->name ? 'selected' : '' }}>{{ $pn->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
 
                             <!-- Dynamic Project Type & Rate Card -->
                             <div id="project_info_box" class="mt-2 p-2 px-3 rounded border bg-light shadow-sm" style="display: none;">

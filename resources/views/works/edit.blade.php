@@ -40,14 +40,24 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="bank_name">Bank Name</label>
-                <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ old('bank_name', $work->bank_name) }}" list="bank_name_list" autocomplete="off" placeholder="Type or select bank...">
-                <datalist id="bank_name_list">
+                <select class="form-control" id="bank_name" name="bank_name">
+                    <option value="">Select Bank Name</option>
+                    @php
+                        $currentBankName = old('bank_name', $work->bank_name);
+                        $foundBank = false;
+                    @endphp
                     @if(isset($bankNames))
                         @foreach($bankNames as $bn)
-                            <option value="{{ $bn->name }}">{{ $bn->name }}</option>
+                            @if($currentBankName == $bn->name)
+                                @php $foundBank = true; @endphp
+                            @endif
+                            <option value="{{ $bn->name }}" {{ $currentBankName == $bn->name ? 'selected' : '' }}>{{ $bn->name }}</option>
                         @endforeach
                     @endif
-                </datalist>
+                    @if($currentBankName && !$foundBank)
+                        <option value="{{ $currentBankName }}" selected>{{ $currentBankName }}</option>
+                    @endif
+                </select>
             </div>
             <div class="form-group col-md-6">
                 <label for="bank_branch">Bank Branch</label>
@@ -66,14 +76,24 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="source">Source</label>
-                <input type="text" class="form-control" id="source" name="source" value="{{ old('source', $work->source) }}" list="source_list" autocomplete="off" placeholder="Type or select source...">
-                <datalist id="source_list">
+                <select class="form-control" id="source" name="source">
+                    <option value="">Select Source</option>
+                    @php
+                        $currentSource = old('source', $work->source);
+                        $foundSource = false;
+                    @endphp
                     @if(isset($sources))
                         @foreach($sources as $s)
-                            <option value="{{ $s->name }}">{{ $s->name }}</option>
+                            @if($currentSource == $s->name)
+                                @php $foundSource = true; @endphp
+                            @endif
+                            <option value="{{ $s->name }}" {{ $currentSource == $s->name ? 'selected' : '' }}>{{ $s->name }}</option>
                         @endforeach
                     @endif
-                </datalist>
+                    @if($currentSource && !$foundSource)
+                        <option value="{{ $currentSource }}" selected>{{ $currentSource }}</option>
+                    @endif
+                </select>
             </div>
         </div>
         <div class="form-row">
@@ -116,12 +136,24 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="project_name">Project Name</label>
-                <input type="text" class="form-control" id="project_name" name="project_name" value="{{ $work->project_name }}" list="project_name_list" autocomplete="off" placeholder="Type or select project...">
-                <datalist id="project_name_list">
-                    @foreach($projectNames as $pn)
-                        <option value="{{ $pn->name }}">{{ $pn->project_type ?? 'Normal' }} | Rate: {{ !is_null($pn->project_rate) ? '₹' . number_format($pn->project_rate, 2) : 'N/A' }}</option>
-                    @endforeach
-                </datalist>
+                <select class="form-control" id="project_name" name="project_name">
+                    <option value="">Select Project Name</option>
+                    @php
+                        $currentProjectName = old('project_name', $work->project_name);
+                        $foundProject = false;
+                    @endphp
+                    @if(isset($projectNames))
+                        @foreach($projectNames as $pn)
+                            @if($currentProjectName == $pn->name)
+                                @php $foundProject = true; @endphp
+                            @endif
+                            <option value="{{ $pn->name }}" {{ $currentProjectName == $pn->name ? 'selected' : '' }}>{{ $pn->name }}</option>
+                        @endforeach
+                    @endif
+                    @if($currentProjectName && !$foundProject)
+                        <option value="{{ $currentProjectName }}" selected>{{ $currentProjectName }}</option>
+                    @endif
+                </select>
 
                 <!-- Dynamic Project Type & Rate Card -->
                 <div id="project_info_box" class="mt-2 p-2 px-3 rounded border bg-light shadow-sm" style="display: none;">
