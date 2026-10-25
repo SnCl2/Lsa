@@ -981,11 +981,13 @@ public function worksForBankBranch(Request $request)
     {
         $selectedRole = $request->input('role');
         $selectedUserId = $request->input('user_id');
+        $selectedStatus = $request->input('status');
         $tab = $request->input('tab', 'all'); // 'all', 'very_old', 'old', 'recent'
         $sort = $request->input('sort', 'oldest_first'); // 'oldest_first' (recent at bottom) or 'newest_first'
         $month = $request->input('month');
 
         $roles = ['Surveyor', 'Reporter', 'Checker', 'In-Charge', 'Delivery Person', 'Bank Branch'];
+        $availableStatuses = ['New File', 'Surveying', 'Reporting', 'Checking', 'Printing'];
 
         $usersByRole = [];
         foreach ($roles as $r) {
@@ -1151,10 +1153,15 @@ public function worksForBankBranch(Request $request)
                   ->orWhere('custom_id', 'like', "%{$search}%")
                   ->orWhere('source', 'like', "%{$search}%")
                   ->orWhere('project_name', 'like', "%{$search}%")
+                  ->orWhere('remarks', 'like', "%{$search}%")
                   ->orWhereHas('bankBranch', function($qb) use ($search) {
                       $qb->where('name', 'like', "%{$search}%");
                   });
             });
+        }
+
+        if ($request->filled('status')) {
+            $baseQuery->where('status', $request->status);
         }
 
         if ($request->filled('bank_branch')) {
@@ -1202,6 +1209,8 @@ public function worksForBankBranch(Request $request)
             'selectedRole',
             'selectedUser',
             'selectedUserId',
+            'selectedStatus',
+            'availableStatuses',
             'userSummaryList',
             'tab',
             'sort',
@@ -1219,6 +1228,7 @@ public function worksForBankBranch(Request $request)
     {
         $selectedRole = $request->input('role');
         $selectedUserId = $request->input('user_id');
+        $selectedStatus = $request->input('status');
         $tab = $request->input('tab', 'all');
         $sort = $request->input('sort', 'oldest_first');
         $month = $request->input('month');
@@ -1260,6 +1270,10 @@ public function worksForBankBranch(Request $request)
             elseif ($selectedRole === 'Bank Branch') $query->whereNotNull('bank_branch');
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         if ($month) {
             $parts = explode('-', $month);
             $year = $parts[0] ?? now()->format('Y');
@@ -1274,6 +1288,7 @@ public function worksForBankBranch(Request $request)
                   ->orWhere('custom_id', 'like', "%{$search}%")
                   ->orWhere('source', 'like', "%{$search}%")
                   ->orWhere('project_name', 'like', "%{$search}%")
+                  ->orWhere('remarks', 'like', "%{$search}%")
                   ->orWhereHas('bankBranch', function($qb) use ($search) {
                       $qb->where('name', 'like', "%{$search}%");
                   });

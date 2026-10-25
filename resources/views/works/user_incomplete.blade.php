@@ -36,7 +36,7 @@
                 @endif
                 <div class="row align-items-end" style="gap: 0;">
                     <!-- Role Filter -->
-                    <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
                         <label for="role" class="small font-weight-bold text-uppercase text-muted mb-1">
                             <i class="fas fa-user-tag text-primary mr-1"></i> Staff Role
                         </label>
@@ -49,7 +49,7 @@
                     </div>
 
                     <!-- User Selector -->
-                    <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="col-lg-3 col-md-4 mb-3 mb-lg-0">
                         <label for="user_id" class="small font-weight-bold text-uppercase text-muted mb-1">
                             <i class="fas fa-user text-primary mr-1"></i> Staff User <span class="text-danger">*</span>
                         </label>
@@ -68,8 +68,21 @@
                         </select>
                     </div>
 
+                    <!-- Work Status Filter -->
+                    <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
+                        <label for="status_filter" class="small font-weight-bold text-uppercase text-muted mb-1">
+                            <i class="fas fa-tasks text-primary mr-1"></i> Work Status
+                        </label>
+                        <select name="status" id="status_filter" class="form-control font-weight-bold">
+                            <option value="">All Statuses</option>
+                            @foreach($availableStatuses as $st)
+                                <option value="{{ $st }}" {{ $selectedStatus === $st ? 'selected' : '' }}>{{ $st }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <!-- Month Filter -->
-                    <div class="col-md-2 mb-3 mb-md-0">
+                    <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
                         <label for="month" class="small font-weight-bold text-uppercase text-muted mb-1">
                             <i class="far fa-calendar-alt text-primary mr-1"></i> Month (Optional)
                         </label>
@@ -77,7 +90,7 @@
                     </div>
 
                     <!-- Sort Order: "resent will be in bottom" -->
-                    <div class="col-md-2 mb-3 mb-md-0">
+                    <div class="col-lg-2 col-md-4 mb-3 mb-lg-0">
                         <label for="sort" class="small font-weight-bold text-uppercase text-muted mb-1">
                             <i class="fas fa-sort-amount-down-alt text-primary mr-1"></i> Priority Order
                         </label>
@@ -88,7 +101,7 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="col-md-1 d-flex align-items-center" style="gap: 6px;">
+                    <div class="col-lg-1 col-md-4 d-flex align-items-center" style="gap: 6px;">
                         <button type="submit" class="btn btn-primary btn-block rounded-pill py-2 font-weight-bold shadow-sm" title="Apply Filter">
                             Apply
                         </button>
@@ -270,6 +283,9 @@
                 <form method="GET" action="{{ route('works.user-incomplete') }}" class="m-0">
                     <input type="hidden" name="role" value="{{ $selectedRole }}">
                     <input type="hidden" name="user_id" value="{{ $selectedUserId }}">
+                    @if($selectedStatus)
+                        <input type="hidden" name="status" value="{{ $selectedStatus }}">
+                    @endif
                     <input type="hidden" name="tab" value="{{ $tab }}">
                     <input type="hidden" name="sort" value="{{ $sort }}">
                     @if($month)
@@ -277,7 +293,7 @@
                     @endif
                     <div class="search-box">
                         <i class="fas fa-search text-muted ml-3"></i>
-                        <input type="text" name="search" class="form-control border-0 shadow-none pl-2 pr-3" placeholder="Search applicant, ID, project..." value="{{ request('search') }}">
+                        <input type="text" name="search" class="form-control border-0 shadow-none pl-2 pr-3" placeholder="Search applicant, ID, remarks..." value="{{ request('search') }}">
                     </div>
                 </form>
             </div>
@@ -293,6 +309,7 @@
                                 <th>Bank / Branch</th>
                                 <th>Valuation Values</th>
                                 <th>Stage & Status</th>
+                                <th>Remarks</th>
                                 <th>Team</th>
                                 <th class="pr-4 text-right">Actions</th>
                             </tr>
@@ -351,6 +368,15 @@
                                         </div>
                                     </td>
                                     <td>
+                                        @if($work->remarks)
+                                            <div class="small font-weight-500 text-dark" style="max-width: 220px; line-height: 1.4; word-break: break-word;" title="{{ $work->remarks }}">
+                                                <i class="far fa-comment-dots text-primary mr-1"></i>{{ $work->remarks }}
+                                            </div>
+                                        @else
+                                            <span class="text-muted small">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <div class="team-avatars">
                                             @if($work->surveyor)<div class="avatar" title="Surveyor: {{ $work->surveyor->name }}">{{ substr($work->surveyor->name, 0, 1) }}</div>@endif
                                             @if($work->reporter)<div class="avatar bg-primary" title="Reporter: {{ $work->reporter->name }}">{{ substr($work->reporter->name, 0, 1) }}</div>@endif
@@ -367,7 +393,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-5">
+                                    <td colspan="9" class="text-center py-5">
                                         <div class="empty-state">
                                             <div class="empty-icon bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                                                 <i class="fas fa-check-circle fa-2x text-success" style="opacity: 0.5;"></i>
