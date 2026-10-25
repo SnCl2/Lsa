@@ -53,6 +53,26 @@
                             <input type="date" class="form-control" id="assignment_date" name="assignment_date" value="{{ old('assignment_date', date('Y-m-d')) }}">
                         </div>
                     </div>
+                    @php
+                        $isKkdaAdmin = auth()->check() && (
+                            auth()->user()->roles->contains('name', 'KKDA Admin') || 
+                            auth()->user()->roles->contains('name', 'Super Admin')
+                        );
+                    @endphp
+                    @if($isKkdaAdmin)
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="created_by">Created By (In-Charge) <span class="text-danger">*</span></label>
+                            <select class="form-control select2-search" id="created_by" name="created_by" required data-placeholder="Select In-Charge user...">
+                                <option value="">Select In-Charge</option>
+                                @foreach($inChargeUsers ?? ($usersByRole['In-Charge'] ?? []) as $id => $name)
+                                    <option value="{{ $id }}" {{ old('created_by') == $id ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">Select the In-Charge user on whose behalf this work is created.</small>
+                        </div>
+                    </div>
+                    @endif
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="rmls_number">RMLS Number</label>

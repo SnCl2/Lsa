@@ -529,12 +529,25 @@ public function worksForBankBranch(Request $request)
             })->pluck('name', 'id');
         }
 
+        // For In-Charge, exclude any user who has KKDA Admin role
+        $inChargeUsers = User::select('id', 'name')
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'In-Charge');
+            })
+            ->whereDoesntHave('roles', function ($query) {
+                $query->where('name', 'KKDA Admin');
+            })
+            ->orderBy('name')
+            ->pluck('name', 'id');
+
+        $usersByRole['In-Charge'] = $inChargeUsers;
+
         $loanTypes = LoanType::orderBy('name')->get();
         $projectNames = ProjectName::orderBy('name')->get();
         $bankNames = BankName::orderBy('name')->get();
         $sources = Source::orderBy('name')->get();
 
-        return view('works.create', compact('usersByRole', 'loanTypes', 'projectNames', 'bankNames', 'sources'));
+        return view('works.create', compact('usersByRole', 'inChargeUsers', 'loanTypes', 'projectNames', 'bankNames', 'sources'));
     }
 
     public function store(Request $request)
@@ -579,6 +592,7 @@ public function worksForBankBranch(Request $request)
                 'actual_value' => 'nullable|numeric|min:0',
                 'realised_value' => 'nullable|numeric|min:0',
                 'fair_market_value' => 'nullable|numeric|min:0',
+                'created_by' => 'nullable|integer|exists:users,id',
             ]);
 
             $canManageAdminFields = Auth::check() && 
@@ -619,7 +633,26 @@ public function worksForBankBranch(Request $request)
                 $validatedData['pdf_1'] = $filePath;
             }
 
-            $validatedData['created_by'] = Auth::id();
+            $isKkdaAdminOrSuper = Auth::check() && (
+                Auth::user()->roles->contains('name', 'KKDA Admin') || 
+                Auth::user()->roles->contains('name', 'Super Admin')
+            );
+
+            if ($isKkdaAdminOrSuper && $request->filled('created_by')) {
+                // Ensure the selected user has the In-Charge role and is not a KKDA Admin
+                $selectedInCharge = User::where('id', $request->input('created_by'))
+                    ->whereHas('roles', function ($query) {
+                        $query->where('name', 'In-Charge');
+                    })
+                    ->whereDoesntHave('roles', function ($query) {
+                        $query->where('name', 'KKDA Admin');
+                    })
+                    ->first();
+
+                $validatedData['created_by'] = $selectedInCharge ? $selectedInCharge->id : Auth::id();
+            } else {
+                $validatedData['created_by'] = Auth::id();
+            }
 
             $work = Work::create($validatedData);
             
