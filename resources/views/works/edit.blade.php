@@ -40,7 +40,7 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="bank_name">Bank Name</label>
-                <select class="form-control" id="bank_name" name="bank_name">
+                <select class="form-control select2-search" id="bank_name" name="bank_name" data-placeholder="Search or select bank...">
                     <option value="">Select Bank Name</option>
                     @php
                         $currentBankName = old('bank_name', $work->bank_name);
@@ -61,7 +61,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="bank_branch">Bank Branch</label>
-                <select class="form-control" id="bank_branch" name="bank_branch">
+                <select class="form-control select2-search" id="bank_branch" name="bank_branch" data-placeholder="Search or select bank branch...">
                     <option value="">Select Bank Branch</option>
                     @foreach($usersByRole['Bank Branch'] as $id => $name)
                         <option value="{{ $id }}" {{ $work->bank_branch == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -76,7 +76,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="source">Source</label>
-                <select class="form-control" id="source" name="source">
+                <select class="form-control select2-search" id="source" name="source" data-placeholder="Search or select source...">
                     <option value="">Select Source</option>
                     @php
                         $currentSource = old('source', $work->source);
@@ -136,7 +136,7 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="project_name">Project Name</label>
-                <select class="form-control" id="project_name" name="project_name">
+                <select class="form-control select2-search" id="project_name" name="project_name" data-placeholder="Search or select project...">
                     <option value="">Select Project Name</option>
                     @php
                         $currentProjectName = old('project_name', $work->project_name);
@@ -409,6 +409,19 @@
                             select.value = oldValues[selectName];
                         }
                     });
+
+                    // Initialize Select2 with search
+                    if (typeof $.fn.select2 !== 'undefined') {
+                        $('.select2-search').each(function() {
+                            const placeholder = $(this).data('placeholder') || 'Search or select...';
+                            $(this).select2({
+                                theme: 'bootstrap4',
+                                width: '100%',
+                                placeholder: placeholder,
+                                allowClear: !$(this).prop('required')
+                            });
+                        });
+                    }
                 });
                 
                 const unitSelect = document.getElementById("unit");
@@ -485,10 +498,10 @@
                         const bankInput = document.getElementById('bank_name');
                         const branchSelect = document.getElementById('bank_branch');
                         if (item.bank_name && bankInput && !bankInput.value) {
-                            bankInput.value = item.bank_name;
+                            $(bankInput).val(item.bank_name).trigger('change');
                         }
                         if (item.bank_branch && branchSelect && !branchSelect.value) {
-                            branchSelect.value = item.bank_branch;
+                            $(branchSelect).val(item.bank_branch).trigger('change');
                         }
                     } else {
                         infoBox.style.display = 'none';
@@ -497,6 +510,7 @@
 
                 const projectInputEl = document.getElementById('project_name');
                 if (projectInputEl) {
+                    $(projectInputEl).on('change select2:select select2:clear', updateProjectDetails);
                     projectInputEl.addEventListener('input', updateProjectDetails);
                     projectInputEl.addEventListener('change', updateProjectDetails);
                     updateProjectDetails();

@@ -60,7 +60,7 @@
                         </div>
                         <div class="form-group col-md-6">
                             <label for="source">Source <span class="text-danger">*</span></label>
-                            <select class="form-control" id="source" name="source" required>
+                            <select class="form-control select2-search" id="source" name="source" required data-placeholder="Search or select source...">
                                 <option value="">Select Source</option>
                                 @if(isset($sources))
                                     @foreach($sources as $s)
@@ -83,7 +83,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="bank_name">Bank Name <span class="text-danger">*</span></label>
-                            <select class="form-control" id="bank_name" name="bank_name" required>
+                            <select class="form-control select2-search" id="bank_name" name="bank_name" required data-placeholder="Search or select bank...">
                                 <option value="">Select Bank Name</option>
                                 @if(isset($bankNames))
                                     @foreach($bankNames as $bn)
@@ -94,7 +94,7 @@
                         </div>
                         <div class="form-group col-md-6">
                             <label for="bank_branch">Bank Branch</label>
-                            <select class="form-control" id="bank_branch" name="bank_branch">
+                            <select class="form-control select2-search" id="bank_branch" name="bank_branch" data-placeholder="Search or select bank branch...">
                                 <option value="">Select Bank Branch</option>
                                 @foreach($usersByRole['Bank Branch'] as $id => $name)
                                     <option value="{{ $id }}" {{ old('bank_branch') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -123,7 +123,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label for="project_name">Project Name</label>
-                            <select class="form-control" id="project_name" name="project_name">
+                            <select class="form-control select2-search" id="project_name" name="project_name" data-placeholder="Search or select project...">
                                 <option value="">Select Project Name</option>
                                 @if(isset($projectNames))
                                     @foreach($projectNames as $pn)
@@ -398,13 +398,32 @@
             }
         }
 
+        // Initialize Select2 with search
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2-search').each(function() {
+                const placeholder = $(this).data('placeholder') || 'Search or select...';
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    width: '100%',
+                    placeholder: placeholder,
+                    allowClear: !$(this).prop('required')
+                });
+            });
+        }
+
         // Validate Part 1 required fields
         function isPart1Valid() {
             const part1Inputs = part1Section.querySelectorAll("input[required], select[required], textarea[required]");
             for (let input of part1Inputs) {
                 if (!input.checkValidity()) {
                     showPart(1);
-                    input.reportValidity();
+                    if ($(input).hasClass('select2-hidden-accessible')) {
+                        $(input).select2('open');
+                        const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                        if (searchInput) searchInput.focus();
+                    } else {
+                        input.reportValidity();
+                    }
                     return false;
                 }
             }
@@ -536,10 +555,10 @@
             const bankInput = document.getElementById('bank_name');
             const branchSelect = document.getElementById('bank_branch');
             if (item.bank_name && bankInput && !bankInput.value) {
-                bankInput.value = item.bank_name;
+                $(bankInput).val(item.bank_name).trigger('change');
             }
             if (item.bank_branch && branchSelect && !branchSelect.value) {
-                branchSelect.value = item.bank_branch;
+                $(branchSelect).val(item.bank_branch).trigger('change');
             }
         } else {
             infoBox.style.display = 'none';
@@ -548,6 +567,7 @@
 
     const projectInputEl = document.getElementById('project_name');
     if (projectInputEl) {
+        $(projectInputEl).on('change select2:select select2:clear', updateProjectDetails);
         projectInputEl.addEventListener('input', updateProjectDetails);
         projectInputEl.addEventListener('change', updateProjectDetails);
         updateProjectDetails();
