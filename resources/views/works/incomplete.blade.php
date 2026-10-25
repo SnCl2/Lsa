@@ -38,6 +38,9 @@
             </form>
             @if(auth()->user()->roles->contains('name', 'Super Admin') || 
                 auth()->user()->roles->contains('name', 'KKDA Admin'))
+            <a href="{{ route('works.user-incomplete') }}" class="btn btn-outline-primary rounded-pill px-3 py-2 font-weight-bold ml-2 shadow-sm">
+                <i class="fas fa-user-clock mr-1"></i> By User Report
+            </a>
             <button type="button" class="btn btn-success rounded-pill px-3 py-2 font-weight-bold ml-2 shadow-sm" id="export-csv-btn">
                 <i class="fas fa-file-csv mr-1"></i> Export CSV
             </button>

@@ -977,6 +977,325 @@ public function worksForBankBranch(Request $request)
         return $this->downloadCsvResponse($works, 'incomplete_works_export.csv');
     }
 
+    public function userIncomplete(Request $request)
+    {
+        $selectedRole = $request->input('role');
+        $selectedUserId = $request->input('user_id');
+        $tab = $request->input('tab', 'all'); // 'all', 'very_old', 'old', 'recent'
+        $sort = $request->input('sort', 'oldest_first'); // 'oldest_first' (recent at bottom) or 'newest_first'
+        $month = $request->input('month');
+
+        $roles = ['Surveyor', 'Reporter', 'Checker', 'In-Charge', 'Delivery Person', 'Bank Branch'];
+
+        $usersByRole = [];
+        foreach ($roles as $r) {
+            $usersByRole[$r] = User::select('id', 'name')
+                ->whereHas('roles', fn($q) => $q->where('name', $r))
+                ->orderBy('name')
+                ->get();
+        }
+
+        $allUsers = User::whereHas('roles', function($q) use ($roles) {
+            $q->whereIn('name', $roles);
+        })->with('roles')->orderBy('name')->get();
+
+        $selectedUser = $selectedUserId ? User::with('roles')->find($selectedUserId) : null;
+
+        if ($selectedUser && !$selectedRole) {
+            $userRoleNames = $selectedUser->roles->pluck('name')->toArray();
+            foreach ($roles as $r) {
+                if (in_array($r, $userRoleNames)) {
+                    $selectedRole = $r;
+                    break;
+                }
+            }
+        }
+
+        $userSummaryList = [];
+        if (!$selectedUser) {
+            $incompleteWorksRaw = Work::where('status', '!=', 'Completed')
+                ->select(['id', 'created_by', 'assignee_surveyor', 'assignee_reporter', 'assignee_checker', 'assignee_delivery', 'bank_branch', 'created_at', 'status'])
+                ->get();
+
+            $fiveDaysAgo = now()->subDays(5);
+            $tenDaysAgo = now()->subDays(10);
+
+            $userStatsMap = [];
+            foreach ($incompleteWorksRaw as $w) {
+                $created = $w->created_at;
+                $isCritical = $created < $tenDaysAgo;
+                $isAging = $created >= $tenDaysAgo && $created < $fiveDaysAgo;
+                $isRecent = $created >= $fiveDaysAgo;
+
+                $rolesToUser = [
+                    'In-Charge' => $w->created_by,
+                    'Surveyor' => $w->assignee_surveyor,
+                    'Reporter' => $w->assignee_reporter,
+                    'Checker' => $w->assignee_checker,
+                    'Delivery Person' => $w->assignee_delivery,
+                    'Bank Branch' => $w->bank_branch,
+                ];
+
+                foreach ($rolesToUser as $rName => $uId) {
+                    if ($uId) {
+                        if (!isset($userStatsMap[$uId])) {
+                            $userStatsMap[$uId] = [
+                                'total' => 0,
+                                'critical' => 0,
+                                'aging' => 0,
+                                'recent' => 0,
+                                'roles' => [],
+                            ];
+                        }
+                        $userStatsMap[$uId]['total']++;
+                        if ($isCritical) $userStatsMap[$uId]['critical']++;
+                        elseif ($isAging) $userStatsMap[$uId]['aging']++;
+                        elseif ($isRecent) $userStatsMap[$uId]['recent']++;
+                        if (!in_array($rName, $userStatsMap[$uId]['roles'])) {
+                            $userStatsMap[$uId]['roles'][] = $rName;
+                        }
+                    }
+                }
+            }
+
+            $userIds = array_keys($userStatsMap);
+            $usersWithStats = User::whereIn('id', $userIds)->get()->keyBy('id');
+            foreach ($userStatsMap as $uId => $stats) {
+                if (isset($usersWithStats[$uId])) {
+                    $uObj = $usersWithStats[$uId];
+                    if (!$selectedRole || in_array($selectedRole, $stats['roles'])) {
+                        $userSummaryList[] = [
+                            'user' => $uObj,
+                            'roles' => $stats['roles'],
+                            'total' => $stats['total'],
+                            'critical' => $stats['critical'],
+                            'aging' => $stats['aging'],
+                            'recent' => $stats['recent'],
+                        ];
+                    }
+                }
+            }
+
+            usort($userSummaryList, function($a, $b) {
+                if ($b['critical'] !== $a['critical']) {
+                    return $b['critical'] <=> $a['critical'];
+                }
+                return $b['total'] <=> $a['total'];
+            });
+        }
+
+        $baseQuery = Work::with([
+            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch'
+        ])->where('status', '!=', 'Completed');
+
+        if ($selectedUser) {
+            $uId = $selectedUser->id;
+            if ($selectedRole === 'Surveyor') {
+                $baseQuery->where('assignee_surveyor', $uId);
+            } elseif ($selectedRole === 'Reporter') {
+                $baseQuery->where('assignee_reporter', $uId);
+            } elseif ($selectedRole === 'Checker') {
+                $baseQuery->where('assignee_checker', $uId);
+            } elseif ($selectedRole === 'In-Charge') {
+                $baseQuery->where('created_by', $uId);
+            } elseif ($selectedRole === 'Delivery Person') {
+                $baseQuery->where('assignee_delivery', $uId);
+            } elseif ($selectedRole === 'Bank Branch') {
+                $baseQuery->where('bank_branch', $uId);
+            } else {
+                $baseQuery->where(function($q) use ($uId) {
+                    $q->where('assignee_surveyor', $uId)
+                      ->orWhere('assignee_reporter', $uId)
+                      ->orWhere('assignee_checker', $uId)
+                      ->orWhere('assignee_delivery', $uId)
+                      ->orWhere('created_by', $uId)
+                      ->orWhere('bank_branch', $uId);
+                });
+            }
+        } elseif ($selectedRole) {
+            if ($selectedRole === 'Surveyor') {
+                $baseQuery->whereNotNull('assignee_surveyor');
+            } elseif ($selectedRole === 'Reporter') {
+                $baseQuery->whereNotNull('assignee_reporter');
+            } elseif ($selectedRole === 'Checker') {
+                $baseQuery->whereNotNull('assignee_checker');
+            } elseif ($selectedRole === 'In-Charge') {
+                $baseQuery->whereNotNull('created_by');
+            } elseif ($selectedRole === 'Delivery Person') {
+                $baseQuery->whereNotNull('assignee_delivery');
+            } elseif ($selectedRole === 'Bank Branch') {
+                $baseQuery->whereNotNull('bank_branch');
+            }
+        }
+
+        if ($month) {
+            $parts = explode('-', $month);
+            $year = $parts[0] ?? now()->format('Y');
+            $monthNum = $parts[1] ?? now()->format('m');
+            $baseQuery->whereYear('created_at', $year)->whereMonth('created_at', $monthNum);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('name_of_applicant', 'like', "%{$search}%")
+                  ->orWhere('custom_id', 'like', "%{$search}%")
+                  ->orWhere('source', 'like', "%{$search}%")
+                  ->orWhere('project_name', 'like', "%{$search}%")
+                  ->orWhereHas('bankBranch', function($qb) use ($search) {
+                      $qb->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('bank_branch')) {
+            $baseQuery->where('bank_branch', (int)$request->bank_branch);
+        }
+
+        $fiveDaysAgo = now()->subDays(5);
+        $tenDaysAgo = now()->subDays(10);
+
+        $totalCount = (clone $baseQuery)->count();
+        $veryOldCount = (clone $baseQuery)->where('created_at', '<', $tenDaysAgo)->count();
+        $oldCount = (clone $baseQuery)->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo)->count();
+        $recentCount = (clone $baseQuery)->where('created_at', '>=', $fiveDaysAgo)->count();
+        $holdCount = (clone $baseQuery)->where('is_hold', 1)->count();
+
+        $stageBreakdown = (clone $baseQuery)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        if ($tab === 'very_old') {
+            $baseQuery->where('created_at', '<', $tenDaysAgo);
+        } elseif ($tab === 'old') {
+            $baseQuery->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo);
+        } elseif ($tab === 'recent') {
+            $baseQuery->where('created_at', '>=', $fiveDaysAgo);
+        }
+
+        // Sorting: default oldest_first (recent tasks at the bottom)
+        if ($sort === 'newest_first') {
+            $baseQuery->orderBy('created_at', 'desc');
+        } else {
+            $baseQuery->orderBy('created_at', 'asc');
+        }
+
+        $works = $baseQuery->paginate(15)->withQueryString();
+
+        return view('works.user_incomplete', compact(
+            'works',
+            'roles',
+            'usersByRole',
+            'allUsers',
+            'selectedRole',
+            'selectedUser',
+            'selectedUserId',
+            'userSummaryList',
+            'tab',
+            'sort',
+            'month',
+            'totalCount',
+            'veryOldCount',
+            'oldCount',
+            'recentCount',
+            'holdCount',
+            'stageBreakdown'
+        ));
+    }
+
+    public function exportUserIncomplete(Request $request)
+    {
+        $selectedRole = $request->input('role');
+        $selectedUserId = $request->input('user_id');
+        $tab = $request->input('tab', 'all');
+        $sort = $request->input('sort', 'oldest_first');
+        $month = $request->input('month');
+
+        $query = Work::with([
+            'creator', 'surveyor', 'reporter', 'checker', 'deliveryPerson', 'bankBranch', 'relatives', 'inspection', 'report'
+        ])->where('status', '!=', 'Completed');
+
+        if ($selectedUserId) {
+            $uId = (int)$selectedUserId;
+            if ($selectedRole === 'Surveyor') {
+                $query->where('assignee_surveyor', $uId);
+            } elseif ($selectedRole === 'Reporter') {
+                $query->where('assignee_reporter', $uId);
+            } elseif ($selectedRole === 'Checker') {
+                $query->where('assignee_checker', $uId);
+            } elseif ($selectedRole === 'In-Charge') {
+                $query->where('created_by', $uId);
+            } elseif ($selectedRole === 'Delivery Person') {
+                $query->where('assignee_delivery', $uId);
+            } elseif ($selectedRole === 'Bank Branch') {
+                $query->where('bank_branch', $uId);
+            } else {
+                $query->where(function($q) use ($uId) {
+                    $q->where('assignee_surveyor', $uId)
+                      ->orWhere('assignee_reporter', $uId)
+                      ->orWhere('assignee_checker', $uId)
+                      ->orWhere('assignee_delivery', $uId)
+                      ->orWhere('created_by', $uId)
+                      ->orWhere('bank_branch', $uId);
+                });
+            }
+        } elseif ($selectedRole) {
+            if ($selectedRole === 'Surveyor') $query->whereNotNull('assignee_surveyor');
+            elseif ($selectedRole === 'Reporter') $query->whereNotNull('assignee_reporter');
+            elseif ($selectedRole === 'Checker') $query->whereNotNull('assignee_checker');
+            elseif ($selectedRole === 'In-Charge') $query->whereNotNull('created_by');
+            elseif ($selectedRole === 'Delivery Person') $query->whereNotNull('assignee_delivery');
+            elseif ($selectedRole === 'Bank Branch') $query->whereNotNull('bank_branch');
+        }
+
+        if ($month) {
+            $parts = explode('-', $month);
+            $year = $parts[0] ?? now()->format('Y');
+            $monthNum = $parts[1] ?? now()->format('m');
+            $query->whereYear('created_at', $year)->whereMonth('created_at', $monthNum);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name_of_applicant', 'like', "%{$search}%")
+                  ->orWhere('custom_id', 'like', "%{$search}%")
+                  ->orWhere('source', 'like', "%{$search}%")
+                  ->orWhere('project_name', 'like', "%{$search}%")
+                  ->orWhereHas('bankBranch', function($qb) use ($search) {
+                      $qb->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('bank_branch')) {
+            $query->where('bank_branch', (int)$request->bank_branch);
+        }
+
+        $fiveDaysAgo = now()->subDays(5);
+        $tenDaysAgo = now()->subDays(10);
+
+        if ($tab === 'very_old') {
+            $query->where('created_at', '<', $tenDaysAgo);
+        } elseif ($tab === 'old') {
+            $query->where('created_at', '<', $fiveDaysAgo)->where('created_at', '>=', $tenDaysAgo);
+        } elseif ($tab === 'recent') {
+            $query->where('created_at', '>=', $fiveDaysAgo);
+        }
+
+        if ($sort === 'newest_first') {
+            $query->orderBy('created_at', 'desc');
+        } else {
+            $query->orderBy('created_at', 'asc');
+        }
+
+        $works = $query->get();
+
+        return $this->downloadCsvResponse($works, 'user_incomplete_works_export.csv');
+    }
+
     public function uploadFinalReports(Request $request, $id)
     {
         $request->validate([

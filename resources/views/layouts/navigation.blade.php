@@ -101,6 +101,9 @@
                         <x-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
                             {{ __('Incomplete Works') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('works.user-incomplete')" :active="request()->routeIs('works.user-incomplete*')">
+                            {{ __('User Incomplete') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('works.daily-report')" :active="request()->routeIs('works.daily-report')">
                             {{ __('Daily Report') }}
                         </x-nav-link>
@@ -217,6 +220,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('works.incomplete')" :active="request()->routeIs('works.incomplete')">
                     {{ __('Incomplete Works') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('works.user-incomplete')" :active="request()->routeIs('works.user-incomplete*')">
+                    {{ __('User Incomplete') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('works.daily-report')" :active="request()->routeIs('works.daily-report')">
                     {{ __('Daily Report') }}
