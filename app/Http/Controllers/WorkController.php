@@ -999,6 +999,15 @@ public function worksForBankBranch(Request $request)
             $q->whereIn('name', $roles);
         })->with('roles')->orderBy('name')->get();
 
+        $allStaffUsersFormatted = $allUsers->map(function($u) {
+            return [
+                'id' => $u->id,
+                'name' => $u->name,
+                'roles' => $u->roles->pluck('name')->toArray(),
+                'roles_text' => $u->roles->pluck('name')->implode(', '),
+            ];
+        });
+
         $selectedUser = $selectedUserId ? User::with('roles')->find($selectedUserId) : null;
 
         if ($selectedUser && !$selectedRole) {
@@ -1189,6 +1198,7 @@ public function worksForBankBranch(Request $request)
             'roles',
             'usersByRole',
             'allUsers',
+            'allStaffUsersFormatted',
             'selectedRole',
             'selectedUser',
             'selectedUserId',

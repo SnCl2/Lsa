@@ -19,7 +19,7 @@
         </div>
         
         <div class="d-flex align-items-center flex-wrap mt-3 mt-lg-0" style="gap: 10px;">
-            @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
+            @if(auth()->user() && (auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin')))
             <button type="button" class="btn btn-success rounded-pill px-4 py-2 font-weight-bold shadow-sm" id="export-user-csv-btn">
                 <i class="fas fa-file-csv mr-1"></i> Export CSV
             </button>
@@ -658,57 +658,93 @@ body {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // Initialize select2 on search fields
-    if (typeof $.fn.select2 !== 'undefined') {
-        $('.select2-search').each(function() {
-            const placeholder = $(this).data('placeholder') || 'Search or select...';
-            $(this).select2({
+    // Role-dependent User dropdown data
+    const usersByRole = @json($usersByRole ?? []);
+    const allStaffUsers = @json($allStaffUsersFormatted ?? []);
+    let currentSelectedUserId = '{{ $selectedUserId }}';
+
+    function initSelect2($elem, placeholder) {
+        if (typeof $.fn.select2 !== 'undefined' && $elem && $elem.length) {
+            $elem.select2({
                 theme: 'bootstrap4',
                 width: '100%',
-                placeholder: placeholder,
+                placeholder: placeholder || 'Search or select...',
                 allowClear: true
             });
+        }
+    }
+
+    // Initialize all select2-search elements except #user_filter which is initialized by updateUserOptions
+    if (typeof $.fn.select2 !== 'undefined') {
+        $('.select2-search').not('#user_filter').each(function() {
+            const placeholder = $(this).data('placeholder') || 'Search or select...';
+            initSelect2($(this), placeholder);
         });
     }
 
-    // Role-dependent User dropdown filtering
-    const roleFilter = document.getElementById('role_filter');
-    const userFilter = document.getElementById('user_filter');
+    function updateUserOptions(selectedRole, preserveCurrent) {
+        const $userSelect = $('#user_filter');
+        if (!$userSelect.length) return;
 
-    if (roleFilter && userFilter) {
-        $(roleFilter).on('change', function() {
-            const selectedRole = $(this).val();
-            // Filter user options
-            $('#user_filter option').each(function() {
-                const optVal = $(this).val();
-                if (!optVal) return; // Keep placeholder
-                
-                const userRolesData = $(this).attr('data-roles');
-                if (!selectedRole) {
-                    $(this).show().removeAttr('disabled');
-                } else {
-                    try {
-                        const rolesArr = JSON.parse(userRolesData || '[]');
-                        if (rolesArr.includes(selectedRole)) {
-                            $(this).show().removeAttr('disabled');
-                        } else {
-                            $(this).hide().attr('disabled', 'disabled');
-                        }
-                    } catch (e) {
-                        $(this).show().removeAttr('disabled');
-                    }
-                }
+        const currentlySelected = preserveCurrent ? ($userSelect.val() || currentSelectedUserId) : '';
+
+        // Destroy existing select2 instance before updating options to prevent DOM desync
+        if (typeof $.fn.select2 !== 'undefined' && $userSelect.hasClass('select2-hidden-accessible')) {
+            $userSelect.select2('destroy');
+        }
+
+        $userSelect.empty();
+
+        let listToRender = [];
+        let placeholderText = '-- Select Staff User --';
+
+        if (selectedRole && usersByRole[selectedRole]) {
+            listToRender = usersByRole[selectedRole].map(function(u) {
+                return { id: u.id, text: u.name };
             });
+            placeholderText = '-- Choose ' + selectedRole + ' (' + listToRender.length + ') --';
+        } else {
+            listToRender = allStaffUsers.map(function(u) {
+                return {
+                    id: u.id,
+                    text: u.name + (u.roles_text ? ' (' + u.roles_text + ')' : '')
+                };
+            });
+            placeholderText = '-- Select Staff User (' + listToRender.length + ') --';
+        }
 
-            // Re-initialize select2 so disabled options are reflected
-            if (typeof $.fn.select2 !== 'undefined') {
-                $(userFilter).select2({
-                    theme: 'bootstrap4',
-                    width: '100%',
-                    placeholder: '-- Select Staff User --',
-                    allowClear: true
-                });
-            }
+        // Add blank/placeholder option
+        $userSelect.append(new Option(placeholderText, '', false, false));
+
+        let isSelectedStillValid = false;
+        listToRender.forEach(function(item) {
+            const isSelected = String(item.id) === String(currentlySelected);
+            if (isSelected) isSelectedStillValid = true;
+            $userSelect.append(new Option(item.text, item.id, false, isSelected));
+        });
+
+        if (!isSelectedStillValid) {
+            $userSelect.val('');
+            currentSelectedUserId = '';
+        } else {
+            $userSelect.val(currentlySelected);
+        }
+
+        // Re-initialize select2 with new placeholder
+        initSelect2($userSelect, placeholderText);
+        $userSelect.trigger('change');
+    }
+
+    // Initial load: populate user options matching pre-selected role (or all roles)
+    const $roleFilter = $('#role_filter');
+    const initialRole = $roleFilter.length ? $roleFilter.val() : '';
+    updateUserOptions(initialRole, true);
+
+    // When role changes, immediately update user dropdown
+    if ($roleFilter.length) {
+        $roleFilter.on('change select2:select select2:clear', function() {
+            const selectedRole = $(this).val();
+            updateUserOptions(selectedRole, false);
         });
     }
 
