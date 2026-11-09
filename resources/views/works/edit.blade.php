@@ -18,7 +18,8 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="custom_id">Custom ID</label>
-                <input type="text" class="form-control" id="custom_id" name="custom_id" value="{{ $work->custom_id }}" readonly>
+                <input type="text" class="form-control bg-light" id="custom_id" value="{{ $work->custom_id }}" readonly disabled>
+                <small class="form-text text-muted">Auto-generated sequence number (immutable).</small>
             </div>
             @if(auth()->user()->roles->contains('name', 'Super Admin') || auth()->user()->roles->contains('name', 'KKDA Admin'))
             <div class="form-group col-md-6">

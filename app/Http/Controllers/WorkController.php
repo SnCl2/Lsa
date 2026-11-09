@@ -764,6 +764,9 @@ public function worksForBankBranch(Request $request)
             // Find Work Entry
             $work = Work::findOrFail($id);
 
+            // Prevent custom_id from ever being manually modified on update
+            unset($validatedData['custom_id']);
+
             if (!$canManageAdminFields) {
                 unset(
                     $validatedData['result'],
