@@ -109,6 +109,35 @@ class Work extends Model
         'gst_amount' => 'decimal:2',
     ];
 
+    public static function generateNextCustomId($valuer)
+    {
+        $prefix = strtoupper(now()->format('M')); // e.g., NOV, DEC
+
+        // Inspect recent 20 records for this valuer to find the highest sequence number in the active series.
+        // This ensures an accidental lower number cannot pull the auto-increment backward.
+        $recentWorks = static::where('valuer', $valuer)
+            ->whereNotNull('custom_id')
+            ->where('custom_id', 'like', '%-%')
+            ->orderBy('id', 'desc')
+            ->limit(20)
+            ->get();
+
+        $maxNumber = 0;
+        foreach ($recentWorks as $w) {
+            $parts = explode('-', $w->custom_id);
+            if (count($parts) === 2 && is_numeric($parts[1])) {
+                $num = (int) $parts[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+
+        $nextNumber = ($maxNumber > 0) ? ($maxNumber + 1) : 1;
+
+        return $prefix . '-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+    }
+
     /**
      * Boot function from Laravel.
      */
@@ -117,27 +146,8 @@ class Work extends Model
         parent::boot();
 
         static::creating(function ($work) {
-            if (empty($work->custom_id)) {
-                $now = now();
-                $prefix = strtoupper($now->format('M')); // e.g., APR, MAY
-
-                // Find the latest work for this valuer (ignoring month/year to keep the counter continuous)
-                $lastWork = static::where('valuer', $work->valuer)
-                    ->whereNotNull('custom_id')
-                    ->where('custom_id', 'like', '%-%')
-                    ->orderBy('id', 'desc')
-                    ->first();
-
-                $nextNumber = 1;
-
-                if ($lastWork && !empty($lastWork->custom_id)) {
-                    $parts = explode('-', $lastWork->custom_id);
-                    if (count($parts) === 2 && is_numeric($parts[1])) {
-                        $nextNumber = (int) $parts[1] + 1;
-                    }
-                }
-
-                $work->custom_id = $prefix . '-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+            if (empty($work->custom_id) && !empty($work->valuer)) {
+                $work->custom_id = static::generateNextCustomId($work->valuer);
             }
         });
     }

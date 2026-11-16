@@ -654,6 +654,9 @@ public function worksForBankBranch(Request $request)
                 $validatedData['created_by'] = Auth::id();
             }
 
+            // Always auto-generate custom_id on creation based on the selected valuer
+            unset($validatedData['custom_id']);
+
             $work = Work::create($validatedData);
             
             // Auto-assign if status is special at creation
@@ -764,8 +767,15 @@ public function worksForBankBranch(Request $request)
             // Find Work Entry
             $work = Work::findOrFail($id);
 
-            // Prevent custom_id from ever being manually modified on update
-            unset($validatedData['custom_id']);
+            // If valuer changed, assign the next sequence ID for the new valuer
+            if (!empty($validatedData['valuer']) && $validatedData['valuer'] !== $work->valuer) {
+                $validatedData['custom_id'] = Work::generateNextCustomId($validatedData['valuer']);
+            } elseif (empty($work->custom_id) && !empty($validatedData['valuer'])) {
+                $validatedData['custom_id'] = Work::generateNextCustomId($validatedData['valuer']);
+            } else {
+                // Otherwise prevent manual modification of custom_id
+                unset($validatedData['custom_id']);
+            }
 
             if (!$canManageAdminFields) {
                 unset(
